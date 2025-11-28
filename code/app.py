@@ -3,21 +3,17 @@
 import os
 import json
 from typing import Dict, Any, List, TypedDict, Union
-from langgraph.graph import StateGraph, END # <-- Corrected line
-# If you need to type hint CompiledGraph, you'd typically import it from langgraph directly, 
-# but often it's simplest to use 'Any' or the imported type from the main executable.
+from langgraph.graph import StateGraph, END
+# from langgraph.graph import CompiledGraph # Import for type hinting
 
 # --- 1. Import the Graph Builders from their respective locations ---
 # NOTE: Adjust these relative imports based on your exact file structure.
-
-
 from Agents.RepoAnalyzerAgent.RepoAnalyzer import build_analyzer_graph
 from Agents.MetaDataAgent.Graph.graph import build_tag_generation_graph
 
 
 # --- 2. Define the Complete, Unified State ---
 # The state must include ALL fields used by BOTH graphs.
-# Assuming a full state from our previous steps (including union_list, etc.)
 class UnifiedAnalysisState(TypedDict):
     repo_url: str
     files: List[Dict]
@@ -35,76 +31,76 @@ class UnifiedAnalysisState(TypedDict):
     keywords: List[str] # Final keywords produced by the Tag Generation Graph
     final_output: Dict[str, Union[str, List, Dict]]
 
-# --- 3. Build and Execute the Assembly Line ---
+# --- 3. Build the Master Assembly Line Graph ---
+
+def build_assembly_line_graph():
+    """
+    Builds and compiles the master LangGraph that chains the two sub-graphs.
+    """
+    print("--- 🏭 Building Master Assembly Line Graph ---")
+
+    # Initialize the master StateGraph with the unified state
+    workflow = StateGraph(UnifiedAnalysisState)
+    
+    # Get the compiled sub-graphs (they are the executables for the nodes)
+    repo_analyzer_app = build_analyzer_graph()
+    tag_generator_app = build_tag_generation_graph()
+
+    # 3a. Add the compiled sub-graphs as nodes in the master workflow
+    # LangGraph allows you to use a CompiledGraph (or any Runnable) as a node.
+    workflow.add_node("repo_analyzer_node", repo_analyzer_app)
+    workflow.add_node("tag_generator_node", tag_generator_app)
+
+    # 3b. Define the workflow flow
+    
+    # Set the entry point to the first sub-graph
+    workflow.set_entry_point("repo_analyzer_node")
+
+    # Connect the first sub-graph to the second. 
+    # The full state output of 'repo_analyzer_node' automatically becomes 
+    # the input for 'tag_generator_node'.
+    workflow.add_edge("repo_analyzer_node", "tag_generator_node")
+    
+    # Connect the second sub-graph to the end
+    workflow.add_edge("tag_generator_node", END)
+
+    # 3c. Compile the master graph
+    app = workflow.compile()
+    print("✅ Master Assembly Line Graph Compiled.")
+    return app
+
 
 def run_assembly_line_analysis(repo_url: str) -> Dict[str, Any]:
     """
-    Chains the execution of the Repo Analyzer Graph and the Tag Generation Graph.
+    Executes the unified assembly line LangGraph.
     """
-    print(f"--- 🏭 Starting Assembly Line for: {repo_url} ---")
     
-    # 3a. Build Agent 1: Repo Analyzer (Initial Fetch/Check/Summarize)
-    print("1. Compiling Repo Analyzer Graph...")
-    repo_analyzer_app: CompiledGraph = build_analyzer_graph()
+    # Build the unified graph
+    assembly_line_app = build_assembly_line_graph()
     
-    # 3b. Build Agent 2: Tag Generation (Parallel Extraction/Curation)
-    print("2. Compiling Tag Generation Graph...")
-    tag_generator_app: CompiledGraph = build_tag_generation_graph()
-
-    # Initial input state for the first agent
     initial_state: Dict[str, Any] = {"repo_url": repo_url}
 
-    # ----------------------------------------------------------------
-    # STAGE 1: Run Repo Analyzer (Fetch, Check Docs, Summarize, etc.)
-    # ----------------------------------------------------------------
-    print("\nSTAGE 1: Running Repo Analyzer...")
+    print(f"\n--- 🚀 Executing Assembly Line for: {repo_url} ---")
     
-    # We run the graph and get the final state dictionary
-    # NOTE: The provided code block's 'build_analyzer_graph' is missing 
-    # the aggregation of 'content_text', so you must ensure that node is 
-    # updated to provide it.
-    
-    # Since the original Agent 1 uses a simple sequential flow (Fetcher -> Checker -> simple Extractor),
-    # we'll run it to the end.
-    
-    # The output of this graph is a dictionary containing all state fields.
-    stage1_output: UnifiedAnalysisState = repo_analyzer_app.invoke(initial_state)
+    # Invoke the single master graph
+    # This single call runs the state from start to finish (Analyzer -> Tag Generator -> END)
+    final_state: UnifiedAnalysisState = assembly_line_app.invoke(initial_state)
 
-    print(f"✅ Stage 1 Complete. Files fetched, Docs checked, Summaries created.")
-    
-    # --- State Transformation / Transfer ---
-    # The state from Stage 1 is exactly what Stage 2 needs.
-    # We use the output of Stage 1 as the input for Stage 2.
-    
-    # The Tag Generation Graph needs: content_text, files (for context), etc.
-    stage2_input: Dict[str, Any] = stage1_output 
-    
-    # ----------------------------------------------------------------
-    # STAGE 2: Run Tag Generator (Parallel Extractors -> Union -> Selector)
-    # ----------------------------------------------------------------
-    print("\nSTAGE 2: Running Tag Generator...")
-    
-    # Invoke the second graph using the final state from the first graph
-    # The output will contain the final 'keywords' list.
-    stage2_output: UnifiedAnalysisState = tag_generator_app.invoke(stage2_input)
-    
-    print(f"✅ Stage 2 Complete. Final keywords curated.")
+    print("✅ Assembly Line Complete.")
 
     # ----------------------------------------------------------------
-    # FINAL ASSEMBLY
+    # FINAL ASSEMBLY (using the final state of the master graph)
     # ----------------------------------------------------------------
     
-    # The final output is assembled from data generated by both agents:
-    # - Summaries/Docs/Files from Stage 1
-    # - Curated Keywords from Stage 2
-    
+    # Extract data from the final state produced by the entire graph run
     final_result = {
-        "project_summary": stage1_output.get("summaries", {}).get("README.md", "No README available"),
-        "file_summaries": stage1_output.get("summaries"),
-        "missing_documentation": stage1_output.get("missing_docs"),
-        "keywords": stage2_output.get("keywords", []), # Take the result from the Tag Graph
-        "file_structure": stage1_output.get("final_output", {}).get("file_structure", {}),
-        "suggested_tags": stage2_output.get("keywords", [])[:5]
+        "project_summary": final_state.get("summaries", {}).get("README.md", "No README available"),
+        "file_summaries": final_state.get("summaries"),
+        "missing_documentation": final_state.get("missing_docs"),
+        "keywords": final_state.get("keywords", []), # Curated keywords from Stage 2
+        # Assuming the 'file_structure' is put into 'final_output' by one of the stages
+        "file_structure": final_state.get("final_output", {}).get("file_structure", {}),
+        "suggested_tags": final_state.get("keywords", [])[:5]
     }
     
     return final_result
@@ -122,9 +118,11 @@ if __name__ == "__main__":
         final_analysis = run_assembly_line_analysis(repo_to_analyze)
         
         print("\n\n=============== FINAL REPORT ===============")
+        # Use simple string formatting for better readability of the print statements
         print(json.dumps(final_analysis, indent=2))
         print("============================================")
 
     except Exception as e:
+        # NOTE: In a real environment, you should replace 'CompiledGraph' 
+        # with the actual imported type from LangGraph.
         print(f"\n❌ An error occurred during the assembly line execution: {e}")
-        # Detailed traceback recommended for debugging production code
