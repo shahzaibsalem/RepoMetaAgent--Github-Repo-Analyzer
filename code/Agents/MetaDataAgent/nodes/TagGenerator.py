@@ -288,28 +288,53 @@ def union_keywords_node(state: Dict[str, Any]) -> Dict[str, Any]:
 # LLM Selector Node
 def make_selector_node(groq_manager_instance: Any) -> Callable[[Dict[str, Any]], Dict[str, Any]]:
     """
-    Returns a node that uses the LLM (Groq) as a Curator to select the best 
-    tags from the merged union list, based on the 'tags_selector' prompt config.
+    Creates a selector node that sends the merged union list to the LLM
+    to select the best final tags.
     """
-    # --- Closure Setup (Runs Once) ---
+
+    # ---------------------------
+    # 1. Initialize Groq client once (closure)
+    # ---------------------------
     client = groq_manager_instance.get_client()
     model = groq_manager_instance.get_model()
-    
-    # Load and process Configuration for the 'tags_selector' agent
-    config = _load_prompt_config(PROMPT_CONFIG_FILE) # Reuse the existing loader
-    
-    # Access the specific configuration block: tags_generation -> agents -> tags_selector
-    selector_config = config.get('tags_generation', {}).get('agents', {}).get('tags_selector', {})
-    
-    # Extract prompt fields
-    prompt_config = selector_config.get('prompt_config', {})
-    max_tags = config.get('tags_generation', {}).get('max_tags', 10) # Max 10 tags
-    
-    system_role = prompt_config.get('role', 'A curator who selects the most important tags.')
-    instruction = prompt_config.get('instruction', 'Select the best tags.')
-    output_format = prompt_config.get('output_format', 'Return JSON.')
-    
-    # Construct the User Instruction Template
+
+    # ---------------------------
+    # 2. Load prompt config
+    # ---------------------------
+    config = _load_prompt_config(PROMPT_CONFIG_FILE)
+
+    selector_config = (
+        config.get("tags_generation", {})
+              .get("agents", {})
+              .get("tags_selector", {})
+    )
+
+    prompt_config = selector_config.get("prompt_config", {})
+    max_tags = config.get("tags_generation", {}).get("max_tags", 10)
+
+    system_role = prompt_config.get(
+        "role",
+        "You are a curator who selects the most important tags."
+    )
+    instruction = prompt_config.get(
+        "instruction",
+        "Select the best tags from the list."
+    )
+    output_format = prompt_config.get(
+        "output_format",
+        """
+{
+  "tags": [
+    {"name": "tag1"},
+    {"name": "tag2"}
+  ]
+}
+"""
+    )
+
+    # ---------------------------
+    # 3. Build the user template
+    # ---------------------------
     user_instruction_template = f"""
 {instruction.strip()}
 
@@ -320,63 +345,70 @@ The maximum number of tags to return is {max_tags}.
 
 ### Required Output Format (Strict JSON)
 {output_format}
-"""
-    # The System Role will carry the identity and required output format
-    system_role_full = f"{system_role}. Your final response MUST strictly adhere to the JSON structure provided in the user message."
+""".strip()
 
+    system_role_full = (
+        f"{system_role}. "
+        "Respond ONLY with valid JSON matching the specified structure."
+    )
 
+    # -------------------------------------------------------------------------
+    # SELECTOR NODE
+    # -------------------------------------------------------------------------
     def selector_node(state: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Submits the merged list (union_list) and the content text to the LLM for curation.
-        """
         union_list: List[str] = state.get("union_list", [])
         content_text: str = state.get("summaries", {}).get("readme.md", "")
-        
+
         if not union_list:
             return {"keywords": []}
-            
-        # Format the list of candidates for the prompt
-        candidate_tags_str = "\n".join([f"- {tag}" for tag in union_list])
-        
-        # Insert the candidates into the template
+
+        # Prepare candidate list for the prompt
+        candidate_tags_str = "\n".join(f"- {tag}" for tag in union_list)
+
         final_instruction = user_instruction_template.replace(
-            "[CANDIDATE_TAGS_PLACEHOLDER]", candidate_tags_str
+            "[CANDIDATE_TAGS_PLACEHOLDER]",
+            candidate_tags_str
         )
-        
-        # Combine instruction with original text and optional memo (not used here)
-        final_user_content = f"{final_instruction}\n\n### Original Text:\n{content_text[:5000]}..." # Truncate text
-        
+
+        final_user_message = (
+            f"{final_instruction}\n\n"
+            f"### Original Text (truncated):\n{content_text[:5000]}..."
+        )
+
+        print("\n--- Running LLM Selector (Curator) ---")
+
         try:
-            print("--- 3f. Running LLM Selector (Curator) to pick best tags...")
-            
             response = client.chat.completions.create(
                 model=model,
                 messages=[
                     {"role": "system", "content": system_role_full},
-                    {"role": "user", "content": final_user_content}
-                ],
-                response_format={"type": "json_object"} 
+                    {"role": "user", "content": final_user_message}
+                ]
             )
-            
-            # The response content will be a JSON string containing the final tags
-            json_response = response.choices[0].message.content.strip()
-            
-            # Parse the JSON array of objects
-            final_tag_list = json.loads(json_response)
-            
-            # Extract only the 'name' field (we lose the 'type' here, but get the best selection)
+
+            raw_content = response.choices[0].message.content.strip()
+
+            # Remove ```json wrappers if present
+            if raw_content.startswith("```"):
+                raw_content = raw_content.strip("```").replace("json", "", 1).strip()
+
+            data = json.loads(raw_content)
+
+            # Expected: {"tags": [{"name": "..."}]}
+            tag_items = data.get("tags", data if isinstance(data, list) else [])
+
             final_keywords = [
-                tag.get('name', '').strip().lower() 
-                for tag in final_tag_list 
-                if tag.get('name') and len(tag.get('name').strip()) > 2
+                t["name"].strip().lower()
+                for t in tag_items
+                if isinstance(t, dict) and t.get("name") and len(t["name"].strip()) > 2
             ]
-            
+
         except Exception as e:
-            print(f"--- LLM Selector Error: {type(e).__name__}: {str(e)} ---")
+            print(f"--- LLM Selector Error: {type(e).__name__}: {e} ---")
             final_keywords = []
-            
-        print(f"--- Selected {len(final_keywords)} final keywords.")
-        # The final result is stored in the 'keywords' field
+
+        print(f"--- Selected {len(final_keywords)} final keywords ---")
+
         return {"keywords": final_keywords}
 
     return selector_node
