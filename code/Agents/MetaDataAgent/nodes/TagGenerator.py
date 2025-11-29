@@ -16,19 +16,18 @@ from pathConfig import PROMPT_CONFIG_FILE
 def _load_prompt_config(file_path: str) -> Dict[str, Any]:
     """Loads and returns the prompt configuration from the YAML file."""
     try:
-        with open(file_path, 'r') as f:
+        with open(file_path, 'r', encoding="utf-8") as f:
             full_config = yaml.safe_load(f)
         
-        # Access the specific configuration block: tags_generation -> agents -> llm_tags_generator
         agent_config = full_config.get('tags_generation', {}).get('agents', {}).get('llm_tags_generator', {})
         tag_types = full_config.get('tags_generation', {}).get('tag_types', [])
-        
+
         return {
             "prompt_config": agent_config.get("prompt_config", {}),
             "tag_types": tag_types,
-            "llm_model_yaml": agent_config.get("llm")
+            "llm": agent_config.get("llm")
         }
-        
+
     except Exception as e:
         print(f"!!! ERROR: Could not load prompt config from {file_path}: {e}")
         return {}
@@ -78,15 +77,15 @@ def make_llm_extractor_node(groq_manager_instance: Any) -> Callable[[Dict[str, A
         output_is_json = True
         
         # Overwrite model if specified in YAML (optional but good practice)
-        if config.get('llm_model_yaml'):
-            model = config['llm_model_yaml']
+        if config.get('llm'):
+            model = config['llm']
 
 
     def llm_extractor_node(state: Dict[str, Any]) -> Dict[str, Any]:
         """
         Extracts structured keywords using the Groq LLM based on the YAML prompt.
         """
-        text = state.get("content_text", "")
+        text = state.get("summaries", {}).get("readme.md", ""),
         if not text:
             return {"llm_keywords": []}
             
@@ -178,7 +177,7 @@ def make_gazetteer_tag_generator_node() -> Callable[[Dict[str, Any]], Dict[str, 
         The result is stored in the 'gazetteer_keywords' state field.
         """
         # Assume 'content_text' is the field holding the aggregated repo content
-        text = state.get("content_text", "")
+        text = state.get("summaries", {}).get("readme.md", "")
         if not text:
             return {"gazetteer_keywords": []}
 
@@ -223,7 +222,7 @@ def make_spacy_extractor_node() -> Callable[[Dict[str, Any]], Dict[str, Any]]:
             return {"spacy_keywords": []}
             
         # Get the aggregated text content from the state
-        text = state.get("content_text", "")
+        text = state.get("summaries", {}).get("readme.md", "")
         if not text:
              return {"spacy_keywords": []}
              
@@ -331,7 +330,7 @@ The maximum number of tags to return is {max_tags}.
         Submits the merged list (union_list) and the content text to the LLM for curation.
         """
         union_list: List[str] = state.get("union_list", [])
-        content_text: str = state.get("content_text", "")
+        content_text: str = state.get("summaries", {}).get("readme.md", "")
         
         if not union_list:
             return {"keywords": []}

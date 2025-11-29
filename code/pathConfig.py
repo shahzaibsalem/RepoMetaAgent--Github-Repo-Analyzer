@@ -1,22 +1,20 @@
 import os
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__)) 
-PROJECT_ROOT = os.path.dirname(BASE_DIR)
+from pathlib import Path
+# directory containing this file (should be the "code" directory)
+BASE_DIR = Path(__file__).resolve().parent
+# project root (parent of code/)
+PROJECT_ROOT = BASE_DIR.parent
 
 # --- Files in the project structure ---
 
-# Path to the gazetteer YAML file (assumed to be in the 'src' directory itself)
-GAZETTEER_FILE = os.path.join(BASE_DIR, "gazetteer_entities.yaml")
+# gazetteer is inside the same directory as this file (code/)
+GAZETTEER_FILE = BASE_DIR / "gazetteer_entities.yaml"
 
 # Path to the .env file (assumed to be in the project root)
 ENV_FILE = os.path.join(PROJECT_ROOT, ".env")
 
-# Path to the prompt configuration YAML file
-PROMPT_CONFIG_FILE = os.path.join(PROJECT_ROOT, "promptConfig.yaml")
-
-# If you have a separate Database folder inside src/
-# DATABASE_DIR = os.path.join(BASE_DIR, "Database")
-# PROMPT_CONFIG_FILE = os.path.join(DATABASE_DIR, "promptConfig.yaml")
+# promptConfig.yaml is inside the same directory as this file (code/)
+PROMPT_CONFIG_FILE = BASE_DIR / "promptConfig.yaml"
 
 # --- Model/LLM Configuration ---
 
