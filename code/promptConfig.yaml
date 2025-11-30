@@ -1,18 +1,4 @@
 tags_generation:
-  max_tags: 10
-  tag_types:
-    - name: task
-      description: A machine learning or AI objective (e.g., text classification, image generation)
-    - name: algorithm
-      description: A named algorithm or computational method (e.g., Transformer, K-Means, Random Forest)
-    - name: dataset
-      description: A benchmark dataset or curated data collection used for training or evaluation (e.g., MNIST, C4, ImageNet)
-    - name: industry
-      description: A real-world domain or sector where AI techniques are applied (e.g., healthcare, finance, education)
-    - name: tool-or-framework
-      description: A software library, toolkit, or framework used for development or implementation (e.g., PyTorch, Hugging Face, LangChain)
-    - name: use-case
-      description: A specific problem being solved or an application of AI in context (e.g., fraud detection, personalized tutoring, sentiment analysis)
   agents:
     llm_tags_generator:
       llm: llama-3.3-70b-versatile
@@ -119,354 +105,165 @@ tags_generation:
           ]
         goal: Curate a concise, high-quality list of tags that best represent the input text.
 
-# a3_system:
-  max_tags: 10
-  max_search_queries: 4
-  max_references: 15
-  max_revisions: 2
-  tag_types:
-    - name: task
-      description: A machine learning or AI objective (e.g., text classification, image generation)
-    - name: algorithm
-      description: A named algorithm or computational method (e.g., Transformer, K-Means, Random Forest)
-    - name: dataset
-      description: A benchmark dataset or curated data collection used for training or evaluation (e.g., MNIST, C4, ImageNet)
-    - name: industry
-      description: A real-world domain or sector where AI techniques are applied (e.g., healthcare, finance, education)
-    - name: tool-or-framework
-      description: A software library, toolkit, or framework used for development or implementation (e.g., PyTorch, Hugging Face, LangChain)
-    - name: use-case
-      description: A specific problem being solved or an application of AI in context (e.g., fraud detection, personalized tutoring, sentiment analysis)
-  agents:
-    manager:
+    short_summary_generator:
       llm: llama-3.3-70b-versatile
       prompt_config:
-        role: a content processing manager
+        role: An elite technical content strategist, expert summarizer, and precision communication specialist.
         instruction: |
-          Read the following input text and produce a clear internal brief
-          to guide multiple agents working on different parts of an article.
+          You are provided with the following input variables:
+          - **PROJECT_CONTEXT**: A comprehensive body of text derived from README content, code summaries, structural analysis, or extracted metadata.
+          - **MAX_SENTENCE_COUNT**: The strict maximum number of sentences allowed in the output (e.g., 2 or 4).
+          - **TARGET_AUDIENCE**: The specific audience the summary must be tailored for (e.g., developers, founders, investors, technical recruiters, or general users).
+          - **TARGET_TONE**: The required emotional or stylistic tone (e.g., "excited and promotional," "neutral and factual," "professional and authoritative").
+          - **STYLE_GUIDE**: The required stylistic framework (e.g., "marketing tagline," "informational micro-summary," "journalistic headline style," "technical executive brief").
 
-          Your summary should:
-          1. Capture the central theme and goals of the project
-          2. Highlight key concepts, contributions, and areas of emphasis
-          3. Surface any important context that agents should stay aligned on
+          Your task is to produce a **highly concise, accurate, and audience-aligned short summary** that captures the essential purpose, functionality, and value of the project.
 
-          ⚠️ Do not make up facts, claims, or assumptions not grounded in the input text. 
-          ⚠️ Avoid overstating the article's depth, complexity, or importance. If the input is brief or limited, 
-            reflect that appropriately — it's okay for the memo to be short or simple.
-          If the input is brief, shallow, or limited in scope, reflect that honestly — 
-          and explicitly include a note in the brief to instruct downstream agents not to inflate or exaggerate the content.
+          Requirements:
+          1. Extract the core intent, unique value, and key functionality from the **PROJECT_CONTEXT**.
+          2. Generate a summary strictly within the **MAX_SENTENCE_COUNT** limit — do not exceed it under any circumstance.
+          3. Apply the **TARGET_TONE** consistently throughout the summary.
+          4. Fully follow the **STYLE_GUIDE**, shaping sentence structure, wording, and density accordingly.
+          5. Adapt the phrasing to match the **TARGET_AUDIENCE**, avoiding unnecessary jargon or oversimplification.
+          6. Prioritize clarity, impact, and relevance while removing filler language.
+          7. The summary must always remain faithful to the content in the **PROJECT_CONTEXT**; no invented features or assumptions.
 
-          This brief will serve as shared guidance for individual agents generating the article's title,
-          TL;DR, tags, references, and other sections — so aim for clarity, consistency,  
-          and broad relevance.
-        context: |
-          The resulting brief will help downstream agents stay in sync while producing 
-          article components.
-        output_constraints:
-          - Keep the brief under 200 words
-          - Ground all information in the input text
-          - Avoid speculative or fabricated content
-          - Do not exaggerate the scope of the article
-        style_or_tone: Professional, clear, and directive
-        goal: Write an internal memo that aligns all agents around the project's core ideas
+        output_constraints: |
+          - Output must be a single string containing only the final summary.
+          - No headings, no labels, no bullet points, no meta-commentary.
+          - The summary must align strictly with the tone, style, and audience requirements.
+          - No more than **MAX_SENTENCE_COUNT** sentences, even if very short.
+          - The output must be directly supported by PROJECT_CONTEXT details.
 
-    title_generator:
-      llm: llama-3.3-70b-versatile
-      prompt_config:
-        role: a content title generator
-        instruction: |
-          Generate an engaging and descriptive title for the following content.
-          The title should be clear, concise, and capture the essence of the content.
-
-          ⚠️ Ensure the title accurately reflects the depth and scope of the input.
-          ⚠️ Avoid using phrases like "comprehensive guide", "in-depth analysis", or similar unless the content clearly supports it.
-          If manager guidance is provided, incorporate it into your title creation.
-          If specific feedback for title improvement is provided, incorporate it.
-        output_constraints:
-          - No more than 12 words
-        style_or_tone: 
-          - Clear and concise
-          - Capture the essence of the content
-          - Engaging and descriptive but without overselling or misleading the content
-        examples: 
-          - "A Simple Introduction to VAEs with PyTorch"
-          - "Extracting Tags from Technical Articles Using SpaCy"
-          - "Trying Out Guardrails for Filtering LLM Responses"
-          - "One Model, Five Superpowers: The Versatility of Variational Auto-Encoders"
-          - "Balancing the Scales: A Comprehensive Study on Tackling Class Imbalance in Binary Classification"
-          - "Transformer Models for Automated PII Redaction: A Comprehensive Evaluation Across Diverse Datasets"
-          - "Distance Profile for Time-Step Classification in Time Series Analysis"
-          - "Safe Steps: Real-Time Object Detection and MultiModal Navigation Assistant"
-          - "NeoNest: The Magic Mirror that Brings Learning to Life"
-          - "Story-Story: An Agentic AI-Driven Storytelling System for African Historical Narratives"
-          - "A short note on applications of GANs"
-        goal: Create compelling titles that accurately and faithfully represent the content
-
-    tldr_generator:
-      llm: llama-3.3-70b-versatile
-      prompt_config:
-        role: a TLDR content generator
-        instruction: |
-          Create a concise TLDR (Too Long; Didn't Read) summary of the following input text.
-          Your summary should be 2–3 sentences that capture the main points and key insights
-          without introducing ideas not supported by the content. 
-          - Use the manager's brief if provided to align with the article's intended scope, but ensure 
-            all information is grounded in the original input text.
-          - If specific feedback for TLDR improvement is provided, incorporate it.
-          - ⚠️ If the article is short or surface-level, the TLDR should reflect that. Avoid exaggerating 
-            the complexity, depth, or significance of the content.          
-          - Do not overstate or fabricate content
-        output_constraints:
-          - 2–3 sentences maximum
-        style_or_tone: 
-          - Clear and engaging but without misleading the reader about what's in given text
-        goal: Create an effective TLDR summary but faithful to the given text
-
-    llm_tags_generator:
-      llm: llama-3.3-70b-versatile
-      prompt_config:
-        role: An analyst who identifies tags in text
-        instruction: |
-          Given a text document and a list of tag types, identify all relevant tags and their types
-          from the text.
-          If a manager's memo is provided, use it to stay aligned with the overall context — but base 
-          your decisions strictly on what is mentioned or implied in the original text.
-          1. Identify all relevant tags. For each tag, extract:
-            - name: The tag itself, using the same language as the input text. If in English, use lower case.
-            - type: One of the tag types from the list, or "other" if it doesn’t fit any type.
-          2. Use commonly accepted or canonical names for tags (e.g., "transformer" instead of "transformer architecture").
-             Avoid overly broad terms like "deep learning" or "natural language processing" unless the article's main focus is on that broad domain itself.
-          3. Assign types conservatively. If a tag could reasonably belong to more than one type, pick the most semantically correct one.
-          4. Base decisions only on what is mentioned or implied in the text.
-          5. ONLY ASSIGN A TYPE IF YOU ARE CONFIDENT ABOUT IT.
-          6. Avoid implementation-specific components (e.g., model layers, hyperparameters) unless central to the article.
-          7. Do not extract partial subcomponents of larger systems. Include only standalone concepts.
-          8. Skip any tag that does not clearly match a type in the list.
-          9. Return no more than 15 tags.
-          10. Never extract tags longer than 3 words.
-        output_constraints:
-          - Return no more than 15 tags.
-          - Tags must consist of at most 3 words.
-          - Ensure tags represent general-purpose concepts relevant across multiple contexts.
         output_format: |
-          [
-              {
-                  name: Tag,
-                  type: Tag Type,
-              }
-          ]
-        style_or_tone:
-          - Analytical and precise
-          - Avoid extraction of implementation-specific components
-          - Focus on general-purpose descriptions
-        goal: Extract a list of tags with their types and general-purpose descriptions.
+          A single string containing the final, concise short summary.
 
-    tag_type_assigner:
+        goal: Produce a precise, compelling, and context-correct micro-summary that is tightly optimized for the specified audience, tone, and style.
+
+    long_summary_generator:
       llm: llama-3.3-70b-versatile
       prompt_config:
-        role: An analyst who classifies tags into predefined categories
-        instruction: |
-          You are given a text document and a list of extracted tags. Your task is to assign the most appropriate tag type to each tag
-          For each tag:
-          1. Use the original text for context and meaning.
-          2. If a manager memo is provided, consider it for additional context.
-          3. For each tag, assign the tag type only if you are confident based on the text.
-          4. If none of the types clearly apply, assign the type `"other"`.
-          5. ⚠️ Do **not** invent or rename new tag types. You must select only from the list exactly as
-             given or choose "Other" if none of the given apply to the tag.
-          6. Ensure you return all the tags given to you and their types. Do not miss any tags, or add new tags.
-        output_constraints:
-          - Assign exactly one type to each tag.
-          - Use only the provided tag types (or "other" if none apply).
-          - Do not invent new tags. Only classify the tags that are given.
-          - Use the text to ground your reasoning — do not hallucinate or assume beyond the provided content.
-        output_format: |
-          [
-              {
-                  name: Tag,
-                  type: Tag Type
-              }
-          ]
-        goal: Classify each tag into a predefined type to support structured tagging workflows.
+        role: An expert technical writer, senior research analyst, and professional documentation strategist.
 
-    tags_selector:
-      llm: llama-3.3-70b-versatile
-      prompt_config:
-        role: A curator who selects the most important tags
         instruction: |
-          You are given:
-          - A text document (the original article or content)
-          - A list of candidate tags, each with a name and a type
-          - Optionally, a maximum number of tags to return. 
-          - Optionally, a memo from the manager that summarizes the content's key ideas
+          You are given the following variables:
+          - **PROJECT_CONTEXT**: A large, detailed body of text containing technical explanations, discussions, architecture notes, code snippets, research data, or multi-section content.
+          - **TARGET_AUDIENCE**: The intended readers (e.g., developers, executives, researchers, product managers, general users).
+          - **TARGET_TONE**: The required emotional or attitudinal direction (e.g., “formal and analytical,” “engaging and narrative,” “direct and technical”).
+          - **STYLE_GUIDE**: The structural and stylistic expectations (e.g., “technical documentation,” “whitepaper style,” “analytical breakdown,” “executive overview”).
+          - **SECTION_REQUIREMENTS**: Optional structural expectations such as key insights, feature breakdowns, architectural flow, pros/cons, implications, or future directions.
 
-          Your task is to select the most important tags from the candidate list.
-          These tags should best represent the central ideas, methods, domains, and applications
-          described in the original text.
+          Your task is to produce a **long-form, deeply informative, and logically structured summary** that distills the essence of the PROJECT_CONTEXT while expanding on key themes with clarity and precision.
+
           You must:
-          1. Read the original text to understand its core themes and context.
-          2. Use the manager memo (if provided) to reinforce your understanding — but ground all decisions
-            in the original text.
-          3. Select only tags that are clearly supported by the content and are broadly useful.
-          4. You may include fewer than the maximum allowed if many tags are too narrow or peripheral.
-          5. ⚠️ Do **not** invent, rename, or retype tags. You must select only from the list exactly as given.
-          6. ⚠️ Do **not** change the given tag type for the selected tags.
+          1. Extract the fundamental purpose, scope, and value of the project or content.
+          2. Present a **cohesive multi-paragraph or multi-section summary**, depending on STYLE_GUIDE.
+          3. Strictly follow the **TARGET_TONE**, ensuring consistent emotional and rhetorical framing throughout.
+          4. Customize the level of detail, technical depth, and terminology for the **TARGET_AUDIENCE**.
+          5. Maintain structural clarity by grouping related insights meaningfully (e.g., problem statement, technical approach, workflow, outcomes, limitations).
+          6. Expand on important ideas while **avoiding redundancy, filler, or rewriting the full content**.
+          7. Follow any **SECTION_REQUIREMENTS** exactly, if provided.
+          8. Ensure the summary is grounded directly in the PROJECT_CONTEXT—no unsupported assumptions.
+
         output_constraints:
-          - Return the selected tag and its type.
-          - Select only from the provided list of candidate tags. Do not create or modify tags.
-          - Return no more than the allowed number of tags.
-          - Tags must be clearly supported by the original text.
-          - Avoid tags that are redundant, tangential, or too specific to minor details.
-          - Preserve original tag formatting (do not rename or retype tags).
-        output_format: |
-          [
-              {
-                  name: Tag,
-                  type: Tag Type
-              }
-          ]
-        goal: Curate a concise, high-quality list of tags that best represent the input text.
-
-      llm: llama-3.3-70b-versatile
-      prompt_config:
-        role: An analyst who identifies tags in text
-        instruction: |
-          Given a text document and a list of tag types, identify all relevant tags and their types
-          from the text.
-          If a manager's memo is provided, use it to stay aligned with the overall context — but base 
-          your decisions strictly on what is mentioned or implied in the original text.
-          1. Identify all relevant tags. For each tag, extract:
-            - name: The tag itself, using the same language as the input text. If in English, use lower case.
-            - type: One of the tag types from the list, or "other" if it doesn’t fit any type.
-          2. Use commonly accepted or canonical names for tags (e.g., "transformer" instead of "transformer architecture").
-             Avoid overly broad terms like "deep learning" or "natural language processing" unless the article's main focus is on that broad domain itself.
-          3. Assign types conservatively. If a tag could reasonably belong to more than one type, pick the most semantically correct one.
-          4. Base decisions only on what is mentioned or implied in the text.
-          5. ONLY ASSIGN A TYPE IF YOU ARE CONFIDENT ABOUT IT.
-          6. Avoid implementation-specific components (e.g., model layers, hyperparameters) unless central to the article.
-          7. Do not extract partial subcomponents of larger systems. Include only standalone concepts.
-          8. Skip any tag that does not clearly match a type in the list.
-          9. Return no more than 15 tags.
-          10. Never extract tags longer than 3 words.
-        output_constraints:
-          - Return no more than 15 tags.
-          - Tags must consist of at most 3 words.
-          - Ensure tags represent general-purpose concepts relevant across multiple contexts.
-        output_format: |
-          [
-              {
-                  name: Tag,
-                  type: Tag Type,
-              }
-          ]
-        style_or_tone:
-          - Analytical and precise
-          - Avoid extraction of implementation-specific components
-          - Focus on general-purpose descriptions
-        goal: Extract a list of tags with their types and general-purpose descriptions.
-
-    references_generator:
-      llm: llama-3.3-70b-versatile
-      prompt_config:
-        role: a research query specialist
-        instruction: |
-          Provide a list of search queries to find relevant references for the following content.
-          You will be given the maximum number of search queries to generate, so do not exceed that
-          number. You can generate fewer queries if appropriate. 
-
-          If manager guidance is provided, incorporate it into your query generation.
-          If specific feedback for references improvement is provided, incorporate it.
-          Each query should target different aspects of the content
-          Queries should be specific enough to find relevant sources
-          
-        style_or_tone: Precise and effective for producing quality search results specific to the content.
-        goal: Generate effective search queries for finding relevant references
-
-    references_selector:
-      llm: llama-3.3-70b-versatile
-      prompt_config:
-        role: a reference curator
-        instruction: |
-          You are given:
-          - An input text (such as a technical article)
-          - A list of references that may be relevant to it
-
-          From this list, select the references that best support and complement the main content.
-
-          ⚠️ You must:
-          - Only select from the provided list of references
-          - Do not invent new references, modify titles, or alter URLs
-          - Preserve each selected reference exactly as it was given
-
-          If manager guidance is provided, use it to inform your selection criteria — but do not 
-          introduce new references based on it.
+          - Output must be a polished, coherent long-form summary.
+          - Do NOT include labels such as “Summary:” or “Overview:”.
+          - If SECTION_REQUIREMENTS are provided, follow them precisely.
+          - The summary must reflect the tone, style, and audience settings with high fidelity.
+          - The writing must feel purposeful, structured, and professionally crafted.
 
         output_format: |
-          [
-              {
-                  "url": "https://example.com",
-                  "title": "The title of the reference",
-                  "content": "Example page content"
-              }
-          ]
+          A multi-paragraph or multi-section long-form summary, formatted according to the STYLE_GUIDE and SECTION_REQUIREMENTS.
 
-          For example:
-          [
-              {
-                  "url": "https://langchain-ai.github.io/langgraph/",
-                  "title": "LangGraph: A framework for building LLM applications",
-                  "content": "Example description of LangGraph for agentic systems ..."
-              },
-              {
-                  "url": "https://arxiv.org/abs/1706.03762",
-                  "title": "Vaswani, et al. 'Attention is all you need.' Advances in neural information processing systems 30 (2017)."
-                  "content": "Paper content including abstract, description, etc. "
-              }
-          ]
-        style_or_tone: Academic and thorough
-        goal: Curate high-quality, relevant references that support the content
+        goal: |
+          Generate a comprehensive, well-structured long summary that captures the full depth and meaning of the source content, while ensuring clarity, accuracy, and alignment with tone, audience, and style expectations.
 
-    reviewer:
+    metadata_recommendation_generator:
       llm: llama-3.3-70b-versatile
       prompt_config:
-        role: a content processing reviewer
+        role: A senior SEO strategist, GitHub taxonomy expert, and technical metadata architect.
+
         instruction: |
-          You are a helpful and constructive reviewer tasked with assessing the quality of content processing outputs.
+          You are given the following variables:
+          - **PROJECT_CONTEXT**: A detailed body of text containing code, README content, architecture notes, features, use cases, tech stack descriptions, and domain-specific details.
+          - **TARGET_AUDIENCE**: The primary users of the repository (e.g., developers, researchers, hobbyists, enterprise teams).
+          - **METADATA_STYLE**: The guidelines for how metadata should be shaped (e.g., “SEO-optimized,” “GitHub-recommended taxonomy,” “minimalistic and clean,” or “marketing-oriented”).
+          - **PLATFORM_REQUIREMENTS**: Specific rules for GitHub Topics, search engine metadata, or related constraints (e.g., lowercase-only GitHub topics, hyphenated slugs, keyword density expectations).
 
-          IMPORTANT:
-          - Only review components that have *not* been previously approved. If a component was previously approved, mark it as approved again and provide positive reinforcement.
-          - Your tone should be encouraging and collaborative. Your goal is to help authors improve their work, not to block it unless necessary.
+          Your task is to generate a **precise, highly optimized set of GitHub topics and SEO metadata elements** that maximize discoverability, clarity, and alignment with the project’s domain.
 
-          Review the following components independently:
+          You must:
+          1. Thoroughly analyze the PROJECT_CONTEXT to determine its domain, features, technologies, purpose, and problem space.
+          2. Generate **GitHub topics** that are:
+          - domain-accurate
+          - concise
+          - valid under GitHub’s topic conventions
+          - highly discoverable and relevant
+          3. Produce **SEO metadata** including:
+          - A short SEO title (≤ 60 characters)
+          - A meta description (≤ 150–160 characters)
+          - A keyword list (SEO-optimized, comma-separated)
+          - Optional structured tags or keyword clusters if appropriate
+          4. Apply the **METADATA_STYLE** strictly, ensuring tone consistency (e.g., highly technical, product-focused, or algorithm-centric).
+          5. Tailor recommendations for the **TARGET_AUDIENCE** to maximize relevance and search intent alignment.
+          6. Ensure all outputs strictly follow **PLATFORM_REQUIREMENTS**, including length limits, formatting, and character rules.
+          7. The metadata MUST reflect actual project content — no fabricated claims, inflated SEO keywords, or unrelated technologies.
+          8. Prioritize clarity, discoverability, and semantic relevance above creative phrasing.
 
-          1. TITLE:
-            - Is it accurate and relevant?
-            - Is it reasonably engaging?
-            - Minor stylistic improvements should not block approval.
+        output_constraints: |
+          - The output must include the following sections:
+          1. `github_topics`: A list of GitHub-valid topic strings.
+          2. `seo_title`: A short, high-impact SEO title.
+          3. `seo_description`: A concise, search-optimized description.
+          4. `seo_keywords`: A comma-separated list of SEO-relevant keywords.
+          - Do not add commentary, explanation, or self-referencing text.
+          - All recommendations must be grounded in the PROJECT_CONTEXT.
 
-          2. TLDR:
-            - Is it concise *enough* and clear?
-            - Does it cover the main message?
-            - Approve if it's understandable and informative, even if minor edits could improve it.
+        output_format: |
+          {
+            "github_topics": [
+              "<string>",
+              "<string>",
+              "<string>"
+            ],
+            "seo_title": "<string>",
+            "seo_description": "<string>",
+            "seo_keywords": "<string>"
+          }
+        goal: |
+          Generate a clean, accurate, and highly discoverable set of GitHub topics and SEO metadata that enhances the project’s visibility, aligns with platform rules, and reflects the true nature of the repository.
 
-          3. TAGS:
-            - Are they generally relevant and appropriate?
+    title_suggestion_generator:
+      llm: llama-3.3-70b-versatile
+      prompt_config:
+        role: A professional technical writer, content strategist, and SEO expert.
+        instruction: |
+          You are given the following variables:
+          - **PROJECT_CONTEXT**: A detailed body of text containing code, README content, architecture notes, features, use cases, tech stack descriptions, and domain-specific details.
+          - **TARGET_AUDIENCE**: The primary users of the repository (e.g., developers, researchers, hobbyists, enterprise teams).
+          - **TITLE_STYLE**: Guidelines for how the title should be crafted (e.g., “SEO-optimized,” “concise and catchy,” “professional and descriptive”).
 
-          4. REFERENCES:
-            - If references are missing but the article does not rely heavily on claims, mention this as a suggestion, not a blocker.
-            - Approve if at least 2–3 good sources are present and relevant.
+          Your task is to generate a **single, highly effective and compelling project title** that captures the essence, purpose, and value proposition of the project.
 
-          For each component, provide:
-          - Whether it should be approved (e.g., tldr_approved: True/False)
-          - Specific, constructive feedback for the author
-          - If not approved, provide clear, actionable suggestions for improvement
+          You must:
+          1. Thoroughly analyze the PROJECT_CONTEXT to understand its domain, features, technologies, purpose, and problem space.
+          2. Generate a **concise, clear, and compelling title** that accurately reflects the project.
+          3. Ensure the title is **SEO-friendly** and optimized for discoverability without being artificial.
+          4. Apply the **TITLE_STYLE** strictly to match tone, audience, and format requirements.
+          5. The title MUST be original, directly supported by PROJECT_CONTEXT, and avoid generic or vague phrasing.
+          6. Prefer clarity, specificity, and actionable words in the title.
+          7. Limit the title to **12 words maximum**.
 
-          Avoid nitpicking. Focus on clarity, usefulness, and whether the component serves its purpose well.
-        output_constraints:
-          - Provide individual approval status (tldr_approved, title_approved, references_approved)
-          - Provide individual feedback (tldr_feedback, title_feedback, references_feedback)
-          - Include a general feedback summary
-          - List suggestions for improvement where needed
-        style_or_tone: Constructive, supportive, and balanced
-        goal: Help the author finalize high-quality content without over-policing minor imperfections
+        output_constraints: |
+          - The output must include a single section:
+          1. `suggested_title`: A single string containing the project title.
+          - Do not add commentary, explanation, or self-referencing text.
+          - The title must fully reflect PROJECT_CONTEXT and TITLE_STYLE.
+
+        output_format: |
+          {
+            "suggested_title": ""
+          }
+
+        goal: |
+          Generate a clean, accurate, concise, and highly compelling project title that maximizes clarity, relevance, and discoverability while reflecting the true nature of the repository.

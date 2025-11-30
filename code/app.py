@@ -9,17 +9,26 @@ from langgraph.graph import StateGraph, END
 # --- 1. Import the Graph Builders from their respective locations ---
 # NOTE: Adjust these relative imports based on your exact file structure.
 from Agents.RepoAnalyzerAgent.RepoAnalyzer import build_analyzer_graph
-from Agents.MetaDataAgent.Graph.graph import build_tag_generation_graph
-
+from Agents.MetaDataAgent.Graph._Tagsgraph import build_tag_generation_graph
+from Agents.MetaDataAgent.Graph._MetaSEOGraph import build_meta_seo_graph
 
 # --- 2. Define the Complete, Unified State ---
 # The state must include ALL fields used by BOTH graphs.
 class UnifiedAnalysisState(TypedDict):
+    # --- FIELDS FROM RepoAnalyzerAgent ---
     repo_url: str
     files: List[Dict]
     summaries: Dict[str, str]
     missing_docs: List[str]
-    
+    #---------------------------------------
+
+    # --- Metadata Fields ---
+    suggested_title: str         
+    short_summary: str           
+    long_summary: str            
+    github_topics: List[str]     
+    # ---------------------------
+
     # Keyword fields (used by Tag Generation Graph)
     content_text: str 
     regex_keywords: List[str]
@@ -45,12 +54,13 @@ def build_assembly_line_graph():
     # Get the compiled sub-graphs (they are the executables for the nodes)
     repo_analyzer_app = build_analyzer_graph()
     tag_generator_app = build_tag_generation_graph()
+    meta_seo_app = build_meta_seo_graph()
 
     # 3a. Add the compiled sub-graphs as nodes in the master workflow
     # LangGraph allows you to use a CompiledGraph (or any Runnable) as a node.
     workflow.add_node("repo_analyzer_node", repo_analyzer_app)
     workflow.add_node("tag_generator_node", tag_generator_app)
-
+    workflow.add_node("meta_seo_node", meta_seo_app)
     # 3b. Define the workflow flow
     
     # Set the entry point to the first sub-graph
@@ -60,9 +70,10 @@ def build_assembly_line_graph():
     # The full state output of 'repo_analyzer_node' automatically becomes 
     # the input for 'tag_generator_node'.
     workflow.add_edge("repo_analyzer_node", "tag_generator_node")
+    workflow.add_edge("tag_generator_node", "meta_seo_node")
     
     # Connect the second sub-graph to the end
-    workflow.add_edge("tag_generator_node", END)
+    workflow.add_edge("meta_seo_node", END)
 
     # 3c. Compile the master graph
     app = workflow.compile()
@@ -97,15 +108,18 @@ def run_assembly_line_analysis(repo_url: str) -> Dict[str, Any]:
         "project_summary": final_state.get("summaries", {}).get("readme.md", "No README available"),
         "file_summaries": final_state.get("summaries"),
         "missing_documentation": final_state.get("missing_docs"),
-        "keywords": final_state.get("keywords", []), # Curated keywords from Stage 2
-        # Assuming the 'file_structure' is put into 'final_output' by one of the stages
+        "keywords": final_state.get("keywords", []),
         "file_structure": final_state.get("final_output", {}).get("file_structure", {}),
         "suggested_tags": final_state.get("keywords", [])[:5],
-        "content_text": final_state.get("content_text", ""),
-        "llm_generated_keywords": final_state.get("llm_keywords", []),
-        "spacy_extracted_keywords": final_state.get("spacy_keywords", []),
-        "gazetteer_extracted_keywords": final_state.get("gazetteer_keywords", []),
-        "union_keywords": final_state.get("union_list", []),
+        "short_summary": final_state.get("short_summary", ""),
+        "long_summary": final_state.get("long_summary", ""),
+        "suggested_title": final_state.get("suggested_title", ""),
+        "github_topics": final_state.get("github_topics", []),
+        # "content_text": final_state.get("content_text", ""),
+        # "llm_generated_keywords": final_state.get("llm_keywords", []),
+        # "spacy_extracted_keywords": final_state.get("spacy_keywords", []),
+        # "gazetteer_extracted_keywords": final_state.get("gazetteer_keywords", []),
+        # "union_keywords": final_state.get("union_list", []),
     }
     
     return final_result

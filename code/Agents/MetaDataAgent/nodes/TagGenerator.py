@@ -76,7 +76,7 @@ def make_llm_extractor_node(groq_manager_instance: Any) -> Callable[[Dict[str, A
     # Build user template (also must contain 'json')
     user_instruction_template = f"""
 ### Task Instructions
-{instruction.strip()}
+{instruction}
 
 Your output MUST be valid JSON.
 json
@@ -348,7 +348,7 @@ def make_selector_node(groq_manager_instance: Any) -> Callable[[Dict[str, Any]],
 
     # Build the user instruction template
     user_instruction_template = f"""
-{instruction.strip()}
+{instruction}
 
 The maximum number of tags to return is {max_tags}.
 
