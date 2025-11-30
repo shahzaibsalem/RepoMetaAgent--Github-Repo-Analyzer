@@ -494,17 +494,30 @@ def assign_tag_types(
     system_role = cfg["role"]
     instruction = cfg["instruction"]
     output_format = cfg["output_format"]
+    output_constraints = cfg["output_constraints"]
+    style_or_tone = cfg["style_or_tone"]
+    goal = cfg["goal"]
 
     # USER prompt template
     USER_TEMPLATE = f"""
 ### Task Instructions
 {instruction}
 
+### Style or Tone
+{style_or_tone}
+
+### Output Constraints
+{output_constraints}
+
 ### Output Format
 Return JSON exactly like this:
+
 {output_format}
 
-### Extracted Tags
+### goal
+{goal}
+
+### Following are the Input Tags
 """
 
     # Convert keywords → [{"name": "..."}]
