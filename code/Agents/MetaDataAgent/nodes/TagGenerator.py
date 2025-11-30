@@ -51,6 +51,7 @@ def make_llm_extractor_node(groq_manager_instance: Any) -> Callable[[Dict[str, A
     """
     Returns a LangGraph-compatible node that extracts structured tags using a Groq LLM.
     """
+
     client = groq_manager_instance.get_client()
     model = groq_manager_instance.get_model()
     MAX_LLM_INPUT = 15000
@@ -59,32 +60,36 @@ def make_llm_extractor_node(groq_manager_instance: Any) -> Callable[[Dict[str, A
     config = _load_llm_tags_generator_config(PROMPT_CONFIG_FILE)
 
     llm_model = config.get("llm") or model
-    system_role = config.get("role", "An analyst")
+    system_role = config.get("role", "You are an AI tag extractor.")
     instruction = config.get("instruction", "Extract relevant tags from the text.")
-    output_format = config.get("output_format", "[{\"name\": Tag, \"type\": Tag Type}]")
+    output_format = config.get("output_format", '[{"name": "tag", "type": "category"}]')
+
+    # Detect if JSON output is expected
     output_is_json = True if output_format.strip().startswith("[") else False
-    print("hello this is text")
-    # User instruction template
+
+    # Always enforce JSON requirement for Groq
+    system_role += "\nRespond ONLY in valid JSON.\njson"
+
+    # Build user template (also must contain 'json')
     user_instruction_template = f"""
-       ### Task Instructions
-       {instruction.strip()}
-       
-       ### Input Text:
-       """
+### Task Instructions
+{instruction.strip()}
+
+Your output MUST be valid JSON.
+json
+
+### Output Format (example)
+{output_format}
+
+### Input Text:
+"""
     def llm_extractor_node(state: Dict[str, Any]) -> Dict[str, Any]:
         text = state.get("summaries", {}).get("readme.md", "")
-        print("hello this is text")
         if not text:
             print("--- WARNING: No README content found in state.")
             return {"llm_keywords": []}
-        print("hello this is after if text")
         input_text = text[:MAX_LLM_INPUT]
-        print("hello this is also after if text")
         final_user_content = f"{user_instruction_template}\n{input_text}"
-
-        print("Final User Content prepared for LLM extraction.")
-        print(final_user_content)
-
         llm_keywords: List[str] = []
         try:
             print("--- Running LLM extraction via Groq...")
@@ -101,31 +106,20 @@ def make_llm_extractor_node(groq_manager_instance: Any) -> Callable[[Dict[str, A
             response = client.chat.completions.create(**response_params)
             response_content = response.choices[0].message.content.strip()
 
-            if output_is_json:
+            if isinstance(response_content, str):
                 try:
-                    tag_list = json.loads(response_content)
-                    llm_keywords = [
-                        tag.get('name', '').strip().lower()
-                        for tag in tag_list
-                        if tag.get('name') and len(tag.get('name').strip()) > 2
-                    ]
-                except Exception as e:
-                    print(f"--- JSON Parsing Error: {type(e).__name__}: {e}")
-                    llm_keywords = []
-            else:
-                # fallback: comma-separated string
-                llm_keywords = [
-                    kw.strip().lower()
-                    for kw in response_content.split(',')
-                    if kw.strip() and len(kw.strip()) > 2
-                ]
+                    response_content = json.loads(response_content)
+                except json.JSONDecodeError:
+                    print("LLM returned invalid JSON")
+                    response_content = {"tags": []}
+            
+            # Extract tag names
+            llm_keywords = [tag["name"] for tag in response_content.get("tags", [])]
 
         except Exception as e:
             print(f"--- LLM Extraction Error: {type(e).__name__}: {str(e)} ---")
             llm_keywords = []
 
-        print(f"--- Extracted {len(llm_keywords)} keywords via LLM.")
-        print(f"The llm keywords are: {llm_keywords[:10]}...")
         return {"llm_keywords": llm_keywords}
 
     return llm_extractor_node
@@ -139,35 +133,44 @@ def load_gazetteer_data(file_path: str) -> Dict[str, str]:
     if not os.path.exists(file_path):
         print(f"!!! ERROR: Gazetteer file not found at: {file_path}")
         return {}
-    
-    with open(file_path, 'r') as f:
-        # Load the YAML data, which is already key: value (term: type)
-        data = yaml.safe_load(f)
-    return data
+    print("--- Loaded Gazetteer data ---")
+    with open(file_path, "r", encoding="utf-8") as f:
+        return yaml.safe_load(f)
 
 def make_gazetteer_tag_generator_node() -> Callable[[Dict[str, Any]], Dict[str, Any]]:
-    gazetteer_map = load_gazetteer_data(GAZETTEER_FILE)
-    gazetteer_terms = [term.strip() for term in gazetteer_map.keys() if term.strip()]
-    gazetteer_terms.sort(key=len, reverse=True)  # longer phrases first
-    pattern = '(' + '|'.join(re.escape(term) for term in gazetteer_terms) + ')'
-    term_regex = re.compile(pattern, re.IGNORECASE)
-    print("I am here!")
+    gazetteer = load_gazetteer_data(GAZETTEER_FILE)
+    # gazetteer_terms = [term.strip() for term in gazetteer_map.keys() if term.strip()]
+    # gazetteer_terms.sort(key=len, reverse=True)
+    # pattern = '(' + '|'.join(re.escape(term) for term in gazetteer_terms) + ')'
+    # term_regex = re.compile(pattern, re.IGNORECASE)
     def gazetteer_tag_generator_node(state: Dict[str, Any]) -> Dict[str, Any]:
         text = state.get("summaries", {}).get("readme.md", "")
-        print("I am here!")
 
         if not text:
             return {"gazetteer_keywords": []}
-        
-        print("I am here!")      
+        print(text)
+        seen = set()
+        entities = []
 
-        matches = term_regex.findall(text)
-        extracted_tags = sorted(set(match.lower() for match in matches if match.strip()))
-        print(f"--- Extracted {len(extracted_tags)} tags: {extracted_tags[:10]}...")
-
-        print("I am here!")
-
-        return {"gazetteer_keywords": extracted_tags}
+        for entity_name, entity_type in gazetteer.items():
+            pattern = r"\b" + re.escape(entity_name) + r"\b"
+            try:
+                for _ in re.finditer(pattern, text, re.IGNORECASE):
+                    key = (entity_name.lower(), entity_type)
+                    if key not in seen:
+                        seen.add(key)
+                        entities.append(
+                            {
+                                "name": entity_name.lower().strip(),
+                                "type": entity_type.strip(),
+                            }
+                        )
+                        print("success1234")                   
+            except re.error as e:
+                print(f"Regex error for entity '{entity_name}': {e}")
+                continue
+        print(f"--- Extracted {len(entities)} gazetteer keywords...")
+        return {"gazetteer_keywords": entities}
 
     return gazetteer_tag_generator_node
 
@@ -185,20 +188,17 @@ def make_spacy_extractor_node() -> Callable[[Dict[str, Any]], Dict[str, Any]]:
         # Handle case where the user forgot to download the model
         print(f"!!! WARNING: SpaCy model '{SPACY_MODEL_NAME}' not found. Skipping extraction.")
         print(f"To fix, run: python -m spacy download {SPACY_MODEL_NAME}")
-        model = None # Set to None to disable the node gracefully
-    print("I am here!")    
+        model = None # Set to None to disable the node gracefully  
 
     def spacy_extractor_node(state: Dict[str, Any]) -> Dict[str, Any]:
         """
         Extracts unique named entities and proper nouns from the content text.
         Updates the 'spacy_keywords' field in the state.
         """
-        print("I am here!") 
         if not model:
             return {"spacy_keywords": []}
             
-
-        print("I am here!")     
+  
         # Get the aggregated text content from the state
         text = state.get("summaries", {}).get("readme.md", "")
         if not text:
@@ -207,8 +207,6 @@ def make_spacy_extractor_node() -> Callable[[Dict[str, Any]], Dict[str, Any]]:
         doc = model(text)
         seen = set()
         entities = []
-
-        print("I am here!") 
         
         # 1. Extract Named Entities (Gazetteer-like technical terms, organizations, etc.)
         for ent in doc.ents:
@@ -220,7 +218,6 @@ def make_spacy_extractor_node() -> Callable[[Dict[str, Any]], Dict[str, Any]]:
             if key not in seen:
                 seen.add(key)
                 entities.append(key)
-        print("I am here!") 
         # 2. Extract Key Nouns and Proper Nouns (concepts, objects, features)
         for token in doc:
             # Focus on common nouns (NOUN) and proper nouns (PROPN) longer than 3 characters
@@ -232,7 +229,6 @@ def make_spacy_extractor_node() -> Callable[[Dict[str, Any]], Dict[str, Any]]:
 
         # Final list of unique, sorted keywords from SpaCy
         final_keywords = sorted(entities)
-        print("I am here!") 
         print(f"--- Extracted {len(final_keywords)} keywords via SpaCy/NLP...")
         return {"spacy_keywords": final_keywords}
 

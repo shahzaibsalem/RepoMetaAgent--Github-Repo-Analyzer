@@ -41,12 +41,13 @@ GROQ_MANAGER = GroqClientManager(model=GROQ_MODEL)
 def build_tag_generation_graph() -> Any:
     """
     Tag Generation Graph:
-    
+
     START -> [SpaCy | Gazetteer | LLM] (Parallel)
             -> UNION (union_keywords_node)
             -> SELECTOR (make_selector_node)
             -> END
     """
+
     workflow = StateGraph(AnalysisState)
 
     # --- Instantiate nodes ---
@@ -55,27 +56,35 @@ def build_tag_generation_graph() -> Any:
     llm_extractor = make_llm_extractor_node(GROQ_MANAGER)
     selector_node = make_selector_node(GROQ_MANAGER)
 
-    # --- Add nodes ---
+    # --- Register nodes ---
     workflow.add_node("spacy_extractor", spacy_extractor)
     workflow.add_node("gazetteer_extractor", gazetteer_extractor)
     workflow.add_node("llm_extractor", llm_extractor)
     workflow.add_node("union_keywords", union_keywords_node)
     workflow.add_node("selector", selector_node)
 
-    # --- Define Entry Point ---
-    # Create a pseudo-start node that fans out to all extractors
-    def start_node(state):
-        return ["spacy_extractor", "gazetteer_extractor", "llm_extractor"]
+    # -----------------------
+    # Entry point START node
+    # -----------------------
+    def start_node(state: AnalysisState):
+        # MUST return a dict (state update)
+        # Not a list of node names!
+        return {}
 
     workflow.add_node("START", start_node)
     workflow.set_entry_point("START")
 
-    # --- Connect Extractors to UNION node ---
+    # --- Fan out parallel execution ---
+    workflow.add_edge("START", "spacy_extractor")
+    workflow.add_edge("START", "gazetteer_extractor")
+    workflow.add_edge("START", "llm_extractor")
+
+    # --- Merge all into UNION node ---
     workflow.add_edge("spacy_extractor", "union_keywords")
     workflow.add_edge("gazetteer_extractor", "union_keywords")
     workflow.add_edge("llm_extractor", "union_keywords")
 
-    # --- Connect UNION to SELECTOR, then END ---
+    # --- Final steps ---
     workflow.add_edge("union_keywords", "selector")
     workflow.add_edge("selector", END)
 
@@ -86,4 +95,5 @@ def build_tag_generation_graph() -> Any:
 # 4. Example Execution
 # -----------------------------
 if __name__ == "__main__":
+    graph = build_tag_generation_graph()
     print("Tag Generation Graph compiled successfully with parallel structure.")
