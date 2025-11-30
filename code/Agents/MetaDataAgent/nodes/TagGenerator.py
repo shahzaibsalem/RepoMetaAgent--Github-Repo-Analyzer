@@ -9,6 +9,9 @@ from pathConfig import GAZETTEER_FILE , SPACY_MODEL_NAME, EXCLUDED_SPACY_ENTITY_
 from groq import Groq
 from pathConfig import PROMPT_CONFIG_FILE
 
+from Agents.MetaDataAgent.nodes.GroqManager import GroqClientManager
+from pathConfig import GROQ_MODEL
+
 # -----------------------------
 # Load YAML Prompt Config
 # -----------------------------
@@ -119,7 +122,8 @@ json
         except Exception as e:
             print(f"--- LLM Extraction Error: {type(e).__name__}: {str(e)} ---")
             llm_keywords = []
-
+        
+        print("LLM Finished")
         return {"llm_keywords": llm_keywords}
 
     return llm_extractor_node
@@ -139,16 +143,12 @@ def load_gazetteer_data(file_path: str) -> Dict[str, str]:
 
 def make_gazetteer_tag_generator_node() -> Callable[[Dict[str, Any]], Dict[str, Any]]:
     gazetteer = load_gazetteer_data(GAZETTEER_FILE)
-    # gazetteer_terms = [term.strip() for term in gazetteer_map.keys() if term.strip()]
-    # gazetteer_terms.sort(key=len, reverse=True)
-    # pattern = '(' + '|'.join(re.escape(term) for term in gazetteer_terms) + ')'
-    # term_regex = re.compile(pattern, re.IGNORECASE)
+
     def gazetteer_tag_generator_node(state: Dict[str, Any]) -> Dict[str, Any]:
         text = state.get("summaries", {}).get("readme.md", "")
 
         if not text:
             return {"gazetteer_keywords": []}
-        print(text)
         seen = set()
         entities = []
 
@@ -169,6 +169,8 @@ def make_gazetteer_tag_generator_node() -> Callable[[Dict[str, Any]], Dict[str, 
             except re.error as e:
                 print(f"Regex error for entity '{entity_name}': {e}")
                 continue
+
+        print("Gazetter Finished")    
         print(f"--- Extracted {len(entities)} gazetteer keywords...")
         return {"gazetteer_keywords": entities}
 
@@ -183,7 +185,6 @@ def make_spacy_extractor_node() -> Callable[[Dict[str, Any]], Dict[str, Any]]:
     try:
         # Load the SpaCy model only once when the graph is built
         model = spacy.load(SPACY_MODEL_NAME)
-        print(f"--- Loaded SpaCy model: {SPACY_MODEL_NAME} ---")
     except OSError:
         # Handle case where the user forgot to download the model
         print(f"!!! WARNING: SpaCy model '{SPACY_MODEL_NAME}' not found. Skipping extraction.")
@@ -229,6 +230,7 @@ def make_spacy_extractor_node() -> Callable[[Dict[str, Any]], Dict[str, Any]]:
 
         # Final list of unique, sorted keywords from SpaCy
         final_keywords = sorted(entities)
+        print("Spacy Finsihed")
         print(f"--- Extracted {len(final_keywords)} keywords via SpaCy/NLP...")
         return {"spacy_keywords": final_keywords}
 
@@ -237,13 +239,14 @@ def make_spacy_extractor_node() -> Callable[[Dict[str, Any]], Dict[str, Any]]:
 # ----------------------
 # Union and Selector Nodes  
 
-def union_keywords_node(state: Dict[str, Any]) -> Dict[str, Any]:
+# def union_keywords_node(state: Dict[str, Any]) -> Dict[str, Any]:
     """
     Combines and de-duplicates all keyword lists (Regex, SpaCy, Gazetteer, LLM) 
     into the merged 'union_list' field in the state for the selector node.
     """
     
     # Safely retrieve lists from the state, defaulting to an empty list if a key is missing
+    print("--- Union Keywords Node Invoked ---")
     regex_k = state.get("regex_keywords", [])
     spacy_k = state.get("spacy_keywords", [])
     gazetteer_k = state.get("gazetteer_keywords", [])
@@ -257,8 +260,46 @@ def union_keywords_node(state: Dict[str, Any]) -> Dict[str, Any]:
     
     # NOTE: We store the raw union list in a new field for the next node
     print(f"--- 3e. Combined and cleaned list of {len(unique_keywords)} keywords for selection...")
+    print("Callnig assign_tag_types now")
+    assign_tag_types(unique_keywords)
+
+    print("Union Finished") 
     
     return {"union_list": unique_keywords}
+
+def union_keywords_node(state: Dict[str, Any]) -> Dict[str, Any]:
+    print("--- Union Keywords Node Invoked ---")
+
+    regex_k = state.get("regex_keywords", [])
+    spacy_k = state.get("spacy_keywords", [])
+    gazetteer_k = state.get("gazetteer_keywords", [])
+    llm_k = state.get("llm_keywords", [])
+
+    # Normalize all keyword lists into pure strings
+    def normalize_list(lst):
+        normalized = []
+        for item in lst:
+            if isinstance(item, dict):
+                # pick only the name field
+                normalized.append(item.get("name", "").lower())
+            elif isinstance(item, str):
+                normalized.append(item.lower())
+        return normalized
+
+    regex_k = normalize_list(regex_k)
+    spacy_k = normalize_list(spacy_k)
+    gazetteer_k = normalize_list(gazetteer_k)
+    llm_k = normalize_list(llm_k)
+
+    # Combine and dedupe
+    all_keywords = regex_k + spacy_k + gazetteer_k + llm_k
+    unique_keywords = sorted(list(set(all_keywords)))
+
+    print(f"--- Combined & cleaned {len(unique_keywords)} keywords ---")
+    print("Calling assign_tag_types now...")
+
+    return {"union_list": unique_keywords}
+
 
 # ----------------------
 # LLM Selector Node
@@ -322,6 +363,7 @@ The maximum number of tags to return is {max_tags}.
 
     # 2c. Define the selector node
     def selector_node(state: Dict[str, Any]) -> Dict[str, Any]:
+        print("--- Selector Node Invoked ---")
         union_list: List[str] = state.get("union_list", [])
         content_text: str = state.get("summaries", {}).get("readme.md", "")
 
@@ -380,6 +422,128 @@ The maximum number of tags to return is {max_tags}.
             final_keywords = []
 
         print(f"--- Selected {len(final_keywords)} final keywords ---")
-        return {"keywords": final_keywords}
+        print("Selector Finished")
+        final_keywords_with_types = assign_tag_types(final_keywords)
+        return {"keywords": final_keywords_with_types}
 
     return selector_node
+
+
+
+
+
+# -----------------------------
+# Standalone Tag Type Assigner Function
+# ----------------------------- 
+
+def load_tag_type_assigner_config(file_path: str) -> Dict[str, Any]:
+    """
+    Loads only the 'tag_type_assigner' configuration from YAML.
+    Returns role, instruction, output_format, etc.
+    """
+    if not os.path.exists(file_path):
+        print(f"!!! ERROR: YAML file not found at: {file_path}")
+        return {}
+
+    try:
+        with open(file_path, 'r', encoding="utf-8") as f:
+            full_config = yaml.safe_load(f)
+
+        agents = full_config.get('tags_generation', {}).get('agents', {})
+        tag_assign_cfg = agents.get('tag_type_assigner', {})
+
+        llm = tag_assign_cfg.get('llm')
+        prompt_config = tag_assign_cfg.get('prompt_config', {})
+
+        return {
+            "llm": llm,
+            "role": prompt_config.get("role"),
+            "instruction": prompt_config.get("instruction"),
+            "output_constraints": prompt_config.get("output_constraints", []),
+            "output_format": prompt_config.get("output_format"),
+            "style_or_tone": prompt_config.get("style_or_tone", []),
+            "goal": prompt_config.get("goal"),
+        }
+
+    except Exception as e:
+        print(f"!!! ERROR: Failed to load tag_type_assigner config: {e}")
+        return {}
+
+
+
+def assign_tag_types(
+    keywords: List[str],
+) -> List[Dict[str, str]]:
+    """
+    Assigns tag types to keywords using:
+      - Groq LLM
+      - YAML config (tag_type_assigner)
+    """
+    # Init Groq client
+    GROQ_MANAGER = GroqClientManager(model=GROQ_MODEL)
+    client = GROQ_MANAGER.get_client()
+
+    # Load tag-type-assigner config
+    cfg = load_tag_type_assigner_config(PROMPT_CONFIG_FILE)
+
+    if not cfg:
+        print("!!! ERROR: tag_type_assigner config empty.")
+        return []
+
+    llm_model = cfg.get("llm", GROQ_MANAGER.get_model())
+    system_role = cfg["role"]
+    instruction = cfg["instruction"]
+    output_format = cfg["output_format"]
+
+    # USER prompt template
+    USER_TEMPLATE = f"""
+### Task Instructions
+{instruction}
+
+### Output Format
+Return JSON exactly like this:
+{output_format}
+
+### Extracted Tags
+"""
+
+    # Convert keywords → [{"name": "..."}]
+    keyword_items = [{"name": kw} for kw in keywords]
+
+    user_prompt = USER_TEMPLATE + json.dumps(keyword_items, indent=2)
+
+    messages = [
+        {"role": "system", "content": system_role},
+        {"role": "user", "content": user_prompt},
+    ]
+
+    print("--- Running Tag Type Assigner (Groq)...")
+
+    response = client.chat.completions.create(
+        model=llm_model,
+        messages=messages,
+        response_format={"type": "json_object"},
+    )
+
+    response_content = response.choices[0].message.content.strip()
+
+    # Parse JSON
+    try:
+        parsed = json.loads(response_content)
+
+        if isinstance(parsed, dict) and "tags" in parsed:
+            print("--- Successfully assigned tag types.")
+            print(f"--- Assigned Tags: {parsed['tags']} ---")
+            return parsed["tags"]
+
+        if isinstance(parsed, list):
+            print("--- Successfully assigned tag types.")
+            print(f"--- Assigned Tags: {parsed} ---")
+            return parsed
+
+        print("--- Unexpected LLM format — returned empty.")
+        return []
+
+    except Exception as e:
+        print(f"--- JSON parse error: {type(e).__name__}: {e}")
+        return []

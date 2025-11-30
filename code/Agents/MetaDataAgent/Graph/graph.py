@@ -25,7 +25,7 @@ class AnalysisState(TypedDict):
     llm_keywords: List[str]
     union_list: List[str]
     missing_docs: List[str]
-    keywords: List[str]
+    keywords: List[Dict[str, str]]
     final_output: Dict[str, Union[str, List, Dict]]
 
 

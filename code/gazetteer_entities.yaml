@@ -1,85 +1,80 @@
-"variational auto-encoder": "algorithm"
-"vae": "algorithm"
-"generative adversarial network": "algorithm"
-"gan": "algorithm"
-"transformer": "algorithm"
-"bert": "algorithm"
-"gpt": "algorithm"
-"decision tree": "algorithm"
-"random forest": "algorithm"
-"svm": "algorithm"
-"support vector machine": "algorithm"
-"k-means": "algorithm"
-"k nearest neighbors": "algorithm"
-"knn": "algorithm"
-"autoencoder": "algorithm"
-"convolutional neural network": "algorithm"
-"cnn": "algorithm"
-"recurrent neural network": "algorithm"
-"rnn": "algorithm"
-"lstm": "algorithm"
-"gru": "algorithm"
-"xgboost": "algorithm"
-"lightgbm": "algorithm"
-
-"mnist": "dataset"
-"cifar-10": "dataset"
-"cifar-100": "dataset"
-"imagenet": "dataset"
-"coco": "dataset"
-"coco captions": "dataset"
-"uci heart disease": "dataset"
-"imdb reviews": "dataset"
-"fashion-mnist": "dataset"
-"wikitext": "dataset"
-"squad": "dataset"
-"glue": "dataset"
-"ag news": "dataset"
-
-"anomaly detection": "task"
-"sentiment analysis": "task"
-"image generation": "task"
-"text summarization": "task"
-"object detection": "task"
-"named entity recognition": "task"
-"machine translation": "task"
-"speech recognition": "task"
-"question answering": "task"
-"image classification": "task"
-"text classification": "task"
-
-"pytorch": "tool-or-framework"
-"tensorflow": "tool-or-framework"
-"keras": "tool-or-framework"
-"scikit-learn": "tool-or-framework"
-"sklearn": "tool-or-framework"
-"hugging face": "tool-or-framework"
-"transformers": "tool-or-framework"
-"cohere": "tool-or-framework"
-"langchain": "tool-or-framework"
-"fastai": "tool-or-framework"
-"spacy": "tool-or-framework"
-"opencv": "tool-or-framework"
-"nltk": "tool-or-framework"
-"pandas": "tool-or-framework"
-"numpy": "tool-or-framework"
-"matplotlib": "tool-or-framework"
-
-"legal document classification": "use-case"
-"fraud detection": "use-case"
-"medical image diagnosis": "use-case"
-"credit scoring": "use-case"
-"customer churn prediction": "use-case"
-"drug discovery": "use-case"
-"financial forecasting": "use-case"
-"e-learning recommendation": "use-case"
-
-"online courses": "task"
-"e-learning": "task"
-"ml": "algorithm"
-"ai": "algorithm"
-"artificial intelligence": "algorithm"
-"nlp": "task"
-"natural language processing": "task"
-"cv": "task"
-"computer vision": "task"
+variational auto-encoder: algorithm
+vae: algorithm
+generative adversarial network: algorithm
+gan: algorithm
+transformer: algorithm
+bert: algorithm
+gpt: algorithm
+decision tree: algorithm
+random forest: algorithm
+svm: algorithm
+support vector machine: algorithm
+k-means: algorithm
+k nearest neighbors: algorithm
+knn: algorithm
+autoencoder: algorithm
+convolutional neural network: algorithm
+cnn: algorithm
+recurrent neural network: algorithm
+rnn: algorithm
+lstm: algorithm
+gru: algorithm
+xgboost: algorithm
+lightgbm: algorithm
+mnist: dataset
+cifar-10: dataset
+cifar-100: dataset
+imagenet: dataset
+coco: dataset
+coco captions: dataset
+uci heart disease: dataset
+imdb reviews: dataset
+fashion-mnist: dataset
+wikitext: dataset
+squad: dataset
+glue: dataset
+ag news: dataset
+anomaly detection: task
+sentiment analysis: task
+image generation: task
+text summarization: task
+object detection: task
+named entity recognition: task
+machine translation: task
+speech recognition: task
+question answering: task
+image classification: task
+text classification: task
+pytorch: tool-or-framework
+tensorflow: tool-or-framework
+keras: tool-or-framework
+scikit-learn: tool-or-framework
+sklearn: tool-or-framework
+hugging face: tool-or-framework
+transformers: tool-or-framework
+cohere: tool-or-framework
+langchain: tool-or-framework
+fastai: tool-or-framework
+spacy: tool-or-framework
+opencv: tool-or-framework
+nltk: tool-or-framework
+pandas: tool-or-framework
+numpy: tool-or-framework
+matplotlib: tool-or-framework
+legal document classification: use-case
+fraud detection: use-case
+medical image diagnosis: use-case
+credit scoring: use-case
+customer churn prediction: use-case
+drug discovery: use-case
+financial forecasting: use-case
+e-learning recommendation: use-case
+online courses: task
+e-learning: task
+ml: algorithm
+ai: algorithm
+artificial intelligence: algorithm
+nlp: task
+natural language processing: task
+cv: task
+computer vision: task
