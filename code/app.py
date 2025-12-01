@@ -122,11 +122,6 @@ def run_assembly_line_analysis(repo_url: str) -> Dict[str, Any]:
         "suggested_title": final_state.get("suggested_title", ""),
         "github_topics": final_state.get("github_topics", []),
         "review_report": final_state.get("review_report", ""),
-        # "content_text": final_state.get("content_text", ""),
-        # "llm_generated_keywords": final_state.get("llm_keywords", []),
-        # "spacy_extracted_keywords": final_state.get("spacy_keywords", []),
-        # "gazetteer_extracted_keywords": final_state.get("gazetteer_keywords", []),
-        # "union_keywords": final_state.get("union_list", []),
     }
     
     return final_result
