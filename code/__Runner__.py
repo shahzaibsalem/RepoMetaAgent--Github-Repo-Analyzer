@@ -1,8 +1,4 @@
 import streamlit as st
-from streamlit_extras.colored_header import colored_header
-from streamlit_extras.let_it_rain import rain
-from streamlit_extras.animated_title import animated_title
-from streamlit_extras.badges import badge
 from PIL import Image
 import time
 
@@ -11,10 +7,9 @@ import time
 # ------------------------------
 from app import run_assembly_line_analysis
 
-
-# ================================
-# 🌈 STYLING & ANIMATIONS
-# ================================
+# ------------------------------
+# PAGE STYLE
+# ------------------------------
 PAGE_CSS = """
 <style>
 body {
@@ -22,7 +17,6 @@ body {
     background-attachment: fixed;
     color: white !important;
 }
-
 #MainMenu {visibility: hidden;}
 footer {visibility: hidden;}
 header {visibility: hidden;}
@@ -41,14 +35,6 @@ header {visibility: hidden;}
     font-size: 1.3rem;
     color: #cfcfcf;
     margin-top: -15px;
-}
-
-.input-box {
-    padding: 20px;
-    border-radius: 15px;
-    border: 2px solid #4e54c8;
-    background: rgba(255,255,255,0.07);
-    color: white !important;
 }
 
 .stButton>button {
@@ -77,38 +63,30 @@ header {visibility: hidden;}
 }
 </style>
 """
-
 st.markdown(PAGE_CSS, unsafe_allow_html=True)
 
-# ================================
-# 🎬 HERO SECTION
-# ================================
-animated_title("🚀 RepoMetaAgent")
-
-st.markdown("<div class='big-title'>Smart AI Repo Analyzer</div>", unsafe_allow_html=True)
+# ------------------------------
+# HERO SECTION
+# ------------------------------
+st.markdown("<div class='big-title'>🚀 RepoMetaAgent</div>", unsafe_allow_html=True)
 st.markdown("<div class='sub-text'>AI-Powered Metadata • Tags • SEO • Review • Summary</div>", unsafe_allow_html=True)
 
-badge(type="github", name="RepoMetaAgent")
-
-# Picture section
 st.image("https://i.ibb.co/8zHxVJz/ai-analyze.png", width=450)
 
 st.write("---")
 
-# ================================
-# 📝 INPUT SECTION
-# ================================
+# ------------------------------
+# INPUT SECTION
+# ------------------------------
 st.markdown("### 🔗 Enter GitHub Repository URL")
 
 repo_url = st.text_input("", placeholder="https://github.com/username/repo", key="repo_input")
-
 start_analysis = st.button("🔍 Analyze Repository")
 
-# ================================
-# ⏳ EXECUTION & LOADING
-# ================================
+# ------------------------------
+# EXECUTION & LOADING
+# ------------------------------
 if start_analysis and repo_url.strip():
-
     with st.spinner("⚡ Initializing AI Graphs..."):
         time.sleep(1)
 
@@ -125,7 +103,7 @@ if start_analysis and repo_url.strip():
     ]
 
     for i, step in enumerate(steps):
-        progress.progress((i + 1) / len(steps), text=f"✨ {step}")
+        progress.progress((i + 1)/len(steps), text=f"✨ {step}")
         time.sleep(1)
 
     # Call your backend
@@ -134,16 +112,10 @@ if start_analysis and repo_url.strip():
     st.success("✅ Repo Analysis Complete!")
 
     st.write("---")
-    rain(
-        emoji="✨",
-        font_size=20,
-        falling_speed=3,
-        animation_length="infinite"
-    )
 
-    # ================================
-    # 📊 DISPLAY RESULTS
-    # ================================
+    # ------------------------------
+    # DISPLAY RESULTS
+    # ------------------------------
     st.markdown("## 📘 Project Summary")
     st.markdown(f"<div class='card'>{final_result['project_summary']}</div>", unsafe_allow_html=True)
 
@@ -170,4 +142,3 @@ if start_analysis and repo_url.strip():
 
 else:
     st.info("👆 Enter a repository URL above to begin analysis.")
-
