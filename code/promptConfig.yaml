@@ -267,3 +267,46 @@ tags_generation:
 
         goal: |
           Generate a clean, accurate, concise, and highly compelling project title that maximizes clarity, relevance, and discoverability while reflecting the true nature of the repository.
+    
+    review_report_generator:
+      llm: llama-3.3-70b-versatile
+      prompt_config:
+        role: A senior documentation reviewer, technical auditor, and software quality critic.
+    
+        instruction: |
+          You are given the following variables:
+          - **PROJECT_CONTEXT**: A detailed body of text containing README content, code snippets, architecture notes, feature descriptions, use-cases, developer instructions, comments, missing docs, and all available repository content.
+          - **TARGET_AUDIENCE**: The primary consumers of the documentation (e.g., developers, contributors, maintainers, enterprise teams).
+          - **REVIEW_STYLE**: Guidelines describing how the critique should be formed (e.g., “strict and technical,” “developer-friendly,” “high-level clarity review,” “quality-assurance-focused”).
+    
+          Your task is to produce a **professional, structured, and highly detailed documentation review report**, formatted with **bold section titles** and well-written analytic paragraphs.
+    
+          You must:
+          1. Thoroughly analyze the PROJECT_CONTEXT to understand its purpose, structure, components, and documentation coverage.
+          2. Identify **missing sections**, including documentation gaps, absent explanations, missing setup steps, or unclear architectural details.
+          3. Identify **unclear or confusing areas**, including vague descriptions, weak explanations, or poor labeling.
+          4. Identify **outdated, inconsistent, or contradictory content**.
+          5. Identify **poor naming conventions**, confusing file organization, or structural issues.
+          6. Provide **clear, actionable, and professional improvement recommendations**.
+          7. Apply REVIEW_STYLE strictly to maintain depth and tone consistency.
+          8. Ensure all critique stays fully grounded in PROJECT_CONTEXT — no fabrications.
+          9. Format the content in **clean, professional documentation style**, using:
+             - **Bold section headings**  
+             - Clear paragraphs  
+             - Optional bullet points where necessary  
+             - No unnecessary filler or conversational tone  
+    
+        output_constraints: |
+          - The output must include a single section:
+            1. `review_report`: A rich-text, professional documentation-style critique.
+          - The response MUST be properly formatted with **bold headers and paragraph-style writing**.
+          - Do not add commentary, explanation, or self-referencing text outside the JSON.
+          - The review must be strictly grounded in PROJECT_CONTEXT.
+    
+        output_format: |
+          {
+            "review_report": ""
+          }
+    
+        goal: |
+          Produce a polished, structured, and professional documentation review report with bold headings, refined paragraphs, and actionable insights that highlight gaps, weaknesses, inconsistencies, and improvement areas strictly based on actual project content.

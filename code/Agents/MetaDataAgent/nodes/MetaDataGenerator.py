@@ -30,20 +30,10 @@ def load_prompt_section(
     try:
         with open(file_path, "r", encoding="utf-8") as f:
             full_config = yaml.safe_load(f)
-        print(agent_key)
         agents = full_config.get("tags_generation", {}).get("agents", {})
-        print(agents)
         section = agents.get(agent_key, {})
-        print(section)
 
         prompt_config = section.get("prompt_config", {})
-        # print(prompt_config)
-        # print(section.get("llm"))
-        # print(prompt_config.get("role"))
-        # print(prompt_config.get("instruction"))
-        # print(str(prompt_config.get("output_constraints")))
-        # print(prompt_config.get("output_format"))
-        # print(prompt_config.get("goal"))
 
         return {
             "llm": section.get("llm"),

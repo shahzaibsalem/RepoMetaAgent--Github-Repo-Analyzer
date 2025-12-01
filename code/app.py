@@ -11,6 +11,7 @@ from langgraph.graph import StateGraph, END
 from Agents.RepoAnalyzerAgent.RepoAnalyzer import build_analyzer_graph
 from Agents.MetaDataAgent.Graph._Tagsgraph import build_tag_generation_graph
 from Agents.MetaDataAgent.Graph._MetaSEOGraph import build_meta_seo_graph
+from Agents.Reviewer.__graph__ import build_reviewer_graph
 
 # --- 2. Define the Complete, Unified State ---
 # The state must include ALL fields used by BOTH graphs.
@@ -40,6 +41,8 @@ class UnifiedAnalysisState(TypedDict):
     keywords: List[str] # Final keywords produced by the Tag Generation Graph
     final_output: Dict[str, Union[str, List, Dict]]
 
+    review_report: str  # Review report from Reviewer Agent
+
 # --- 3. Build the Master Assembly Line Graph ---
 
 def build_assembly_line_graph():
@@ -55,12 +58,14 @@ def build_assembly_line_graph():
     repo_analyzer_app = build_analyzer_graph()
     tag_generator_app = build_tag_generation_graph()
     meta_seo_app = build_meta_seo_graph()
+    reviewer_app = build_reviewer_graph()
 
     # 3a. Add the compiled sub-graphs as nodes in the master workflow
     # LangGraph allows you to use a CompiledGraph (or any Runnable) as a node.
     workflow.add_node("repo_analyzer_node", repo_analyzer_app)
     workflow.add_node("tag_generator_node", tag_generator_app)
     workflow.add_node("meta_seo_node", meta_seo_app)
+    workflow.add_node("reviewer_node", reviewer_app)
     # 3b. Define the workflow flow
     
     # Set the entry point to the first sub-graph
@@ -71,9 +76,10 @@ def build_assembly_line_graph():
     # the input for 'tag_generator_node'.
     workflow.add_edge("repo_analyzer_node", "tag_generator_node")
     workflow.add_edge("tag_generator_node", "meta_seo_node")
+    workflow.add_edge("meta_seo_node", "reviewer_node")
     
     # Connect the second sub-graph to the end
-    workflow.add_edge("meta_seo_node", END)
+    workflow.add_edge("reviewer_node", END)
 
     # 3c. Compile the master graph
     app = workflow.compile()
@@ -115,6 +121,7 @@ def run_assembly_line_analysis(repo_url: str) -> Dict[str, Any]:
         "long_summary": final_state.get("long_summary", ""),
         "suggested_title": final_state.get("suggested_title", ""),
         "github_topics": final_state.get("github_topics", []),
+        "review_report": final_state.get("review_report", ""),
         # "content_text": final_state.get("content_text", ""),
         # "llm_generated_keywords": final_state.get("llm_keywords", []),
         # "spacy_extracted_keywords": final_state.get("spacy_keywords", []),
