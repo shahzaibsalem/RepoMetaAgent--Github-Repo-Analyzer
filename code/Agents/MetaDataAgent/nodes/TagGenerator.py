@@ -87,7 +87,10 @@ json
 ### Input Text:
 """
     def llm_extractor_node(state: Dict[str, Any]) -> Dict[str, Any]:
-        text = state.get("summaries", {}).get("readme.md", "")
+        # text = state.get("summaries", {}).get("readme.md", "")
+        text = state.get("readme_md", "")
+        print("in llm")
+        print(f"text: {text}")
         if not text:
             print("--- WARNING: No README content found in state.")
             return {"llm_keywords": []}
@@ -145,7 +148,8 @@ def make_gazetteer_tag_generator_node() -> Callable[[Dict[str, Any]], Dict[str, 
     gazetteer = load_gazetteer_data(GAZETTEER_FILE)
 
     def gazetteer_tag_generator_node(state: Dict[str, Any]) -> Dict[str, Any]:
-        text = state.get("summaries", {}).get("readme.md", "")
+        # text = state.get("summaries", {}).get("readme.md", "")
+        text = state.get("readme_md", "")
 
         if not text:
             return {"gazetteer_keywords": []}
@@ -201,7 +205,8 @@ def make_spacy_extractor_node() -> Callable[[Dict[str, Any]], Dict[str, Any]]:
             
   
         # Get the aggregated text content from the state
-        text = state.get("summaries", {}).get("readme.md", "")
+        # text = state.get("summaries", {}).get("readme.md", "")
+        text = state.get("readme_md", "")
         if not text:
              return {"spacy_keywords": []}
              
@@ -270,7 +275,7 @@ def make_spacy_extractor_node() -> Callable[[Dict[str, Any]], Dict[str, Any]]:
 def union_keywords_node(state: Dict[str, Any]) -> Dict[str, Any]:
     print("--- Union Keywords Node Invoked ---")
 
-    regex_k = state.get("regex_keywords", [])
+    # regex_k = state.get("regex_keywords", [])
     spacy_k = state.get("spacy_keywords", [])
     gazetteer_k = state.get("gazetteer_keywords", [])
     llm_k = state.get("llm_keywords", [])
@@ -286,13 +291,13 @@ def union_keywords_node(state: Dict[str, Any]) -> Dict[str, Any]:
                 normalized.append(item.lower())
         return normalized
 
-    regex_k = normalize_list(regex_k)
+    # regex_k = normalize_list(regex_k)
     spacy_k = normalize_list(spacy_k)
     gazetteer_k = normalize_list(gazetteer_k)
     llm_k = normalize_list(llm_k)
 
     # Combine and dedupe
-    all_keywords = regex_k + spacy_k + gazetteer_k + llm_k
+    all_keywords = spacy_k + gazetteer_k + llm_k
     unique_keywords = sorted(list(set(all_keywords)))
 
     print(f"--- Combined & cleaned {len(unique_keywords)} keywords ---")

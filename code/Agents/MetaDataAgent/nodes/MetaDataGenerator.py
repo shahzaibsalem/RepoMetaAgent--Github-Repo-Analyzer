@@ -79,7 +79,8 @@ def generate_title_short_summary(groq_manager_instance: Any) -> Callable[[Dict[s
 ### Input Text:
 """
     def title_short_summary_extractor_node(state: Dict[str, Any]) -> Dict[str, Any]:
-        text = state.get("summaries", {}).get("readme.md", "")
+        # text = state.get("summaries", {}).get("readme.md", "")
+        text = state.get("readme_md", "")
         if not text:
             print("--- WARNING: No README content found in state.")
             return {"short_summary": ""}
@@ -139,7 +140,8 @@ def generate_long_summary(groq_manager_instance: Any) -> Callable[[Dict[str, Any
 ### Input Text:
 """
     def title_long_summary_extractor_node(state: Dict[str, Any]) -> Dict[str, Any]:
-        text = state.get("summaries", {}).get("readme.md", "")
+        # text = state.get("summaries", {}).get("readme.md", "")
+        text = state.get("readme_md", "")
         if not text:
             print("--- WARNING: No README content found in state.")
             return {"long_summary": ""}
@@ -195,7 +197,8 @@ def generate_topics_seo(groq_manager_instance: Any) -> Callable[[Dict[str, Any]]
 ### Input Text:
 """
     def topics_seo_extractor_node(state: Dict[str, Any]) -> Dict[str, Any]:
-        text = state.get("summaries", {}).get("readme.md", "")
+        # text = state.get("summaries", {}).get("readme.md", "")
+        text = state.get("readme_md", "")
         if not text:
             print("--- WARNING: No README content found in state.")
             return {"github_topics": []}
@@ -251,7 +254,8 @@ def generate_suggested_title(groq_manager_instance: Any) -> Callable[[Dict[str, 
 ### Input Text:
 """
     def title_suggestion_extractor_node(state: Dict[str, Any]) -> Dict[str, Any]:
-        text = state.get("summaries", {}).get("readme.md", "")
+        # text = state.get("summaries", {}).get("readme.md", "")
+        text = state.get("readme_md", "")
         if not text:
             print("--- WARNING: No README content found in state.")
             return {"suggested_title": ""}

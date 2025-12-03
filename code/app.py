@@ -20,7 +20,9 @@ class UnifiedAnalysisState(TypedDict):
     repo_url: str
     files: List[Dict]
     summaries: Dict[str, str]
+    readme_md: str
     missing_docs: List[str]
+    # keywords: List[str]
     #---------------------------------------
 
     # --- Metadata Fields ---
@@ -111,7 +113,7 @@ def run_assembly_line_analysis(repo_url: str) -> Dict[str, Any]:
     
     # Extract data from the final state produced by the entire graph run
     final_result = {
-        "project_summary": final_state.get("summaries", {}).get("readme.md", "No README available"),
+        "project_summary": final_state.get("readme_md", ""),
         "file_summaries": final_state.get("summaries"),
         "missing_documentation": final_state.get("missing_docs"),
         "keywords": final_state.get("keywords", []),
@@ -133,7 +135,7 @@ if __name__ == "__main__":
     
     # NOTE: Ensure the GROQ_API_KEY environment variable is set.
     
-    repo_to_analyze = "https://github.com/roshan9419/LearnEd_E-learning_Website"
+    # repo_to_analyze = "https://github.com/roshan9419/LearnEd_E-learning_Website"
     
     try:
         final_analysis = run_assembly_line_analysis(repo_to_analyze)

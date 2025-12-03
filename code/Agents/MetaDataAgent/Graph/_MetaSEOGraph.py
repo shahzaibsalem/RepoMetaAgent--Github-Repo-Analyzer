@@ -17,6 +17,7 @@ class MetaDataState(TypedDict):
     repo_url: str
     files: List[Dict]
     summaries: Dict[str, str]
+    readme_md: str
     missing_docs: List[str]
     content_text: str
     

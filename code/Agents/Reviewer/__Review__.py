@@ -56,7 +56,7 @@ def make_reviewer_agent_node(groq_manager_instance: Any) -> Callable[[Dict[str, 
     client = groq_manager_instance.get_client()
     model = groq_manager_instance.get_model()
 
-    config = load_prompt_section(PROMPT_CONFIG_FILE, "reviewer_agent")
+    config = load_prompt_section(PROMPT_CONFIG_FILE, "review_report_generator")
 
     llm_model = config.get("llm") or model
     system_role = config.get("role", "")
@@ -85,7 +85,8 @@ def make_reviewer_agent_node(groq_manager_instance: Any) -> Callable[[Dict[str, 
 """
 
     def reviewer_node(state: Dict[str, Any]) -> Dict[str, Any]:
-        readme_text = state.get("summaries", {}).get("readme.md", "")
+        # readme_text = state.get("summaries", {}).get("readme.md", "")
+        readme_text = state.get("readme_md", "")
         # keywords = state.get("keywords", [])
         # short_summary = state.get("short_summary", "")
         # long_summary = state.get("long_summary", "")
