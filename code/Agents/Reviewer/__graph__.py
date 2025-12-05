@@ -26,6 +26,8 @@ class ReviewerState(TypedDict):
     
     final_output: Dict[str, Union[str, List, Dict]]
 
+    review_report: str 
+
 def build_reviewer_graph() -> StateGraph:
     """
     Builds a LangGraph for the Reviewer Agent.

@@ -3,14 +3,11 @@ from PIL import Image
 import time
 import json 
 from app import run_assembly_line_analysis
-# ------------------------------
-# Import Your Main Graph System
-# ------------------------------
-# Mock function for local testing if 'app' is not provided:
+
 
 
 # ------------------------------
-# PAGE STYLE (Dashing/Neon Theme)
+# PAGE STYLE
 # ------------------------------
 PAGE_CSS = """
 <style>
@@ -80,7 +77,7 @@ header {visibility: hidden;}
 .hero-icon {
     font-size: 8rem;
     color: #00eaff;
-    text-shadow: 0 0 15px #00eaff, 0 0 30px #00eaff, 0 0 60px rgba(0, 234, 255, 0.4);
+    text-shadow: 0 0 10px #00eaff, 0 0 30px #00eaff, 0 0 10px rgba(0, 234, 255, 0.2);
     animation: rotateIcon 15s infinite linear;
     display: inline-block;
 }
@@ -204,6 +201,62 @@ header {visibility: hidden;}
     margin-bottom: 10px;
 }
 
+
+/* --- FILE TREE STYLING (VS Code Look) --- */
+
+.file-tree-container {
+    background: #1e1e1e; /* VS Code dark background */
+    color: #cccccc;
+    padding: 15px;
+    border-radius: 8px;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 0.95rem;
+    border: 1px solid rgba(255, 0, 195, 0.2); /* Magenta outline */
+    box-shadow: 0 0 15px rgba(255, 0, 195, 0.2);
+    overflow-x: auto;
+}
+
+.file-tree-list {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+}
+
+.file-tree-list .file-tree-list {
+    padding-left: 20px; /* Indentation for nested items */
+}
+
+.tree-node {
+    line-height: 1.8;
+    white-space: nowrap;
+}
+
+.folder-name {
+    color: #77b3ff; /* Blue folder color */
+    font-weight: 600;
+}
+
+.file-name {
+    color: #cccccc; /* Default file name color */
+}
+
+.icon-folder {
+    color: #ffcc00; /* Yellow folder icon color */
+    margin-right: 5px;
+    font-size: 0.8em;
+    display: inline-block;
+    /* transform: rotate(90deg); Removed this to let st.expander handle open/close icon */
+}
+
+.icon-file {
+    color: #ff00c3; /* Magenta file icon color (using # as placeholder) */
+    margin-right: 5px;
+    font-size: 0.9em;
+}
+
+/* --- END FILE TREE STYLING --- */
+
+
 /* Result Cards - Solid, professional look */
 .result-card-title {
     font-size: 1.8rem;
@@ -225,6 +278,39 @@ header {visibility: hidden;}
     line-height: 1.6;
 }
 
+/* --- KEYWORD TAG STYLING --- */
+.tag-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 10px 0;
+}
+
+.tag-item {
+    background-color: #00eaff; /* Cyan background for primary tags */
+    color: #0f0c29; /* Dark text on bright background */
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    box-shadow: 0 0 10px rgba(0, 234, 255, 0.8); /* Stronger cyan glow */
+    transition: all 0.2s ease-in-out;
+    cursor: default;
+    text-transform: uppercase;
+}
+.tag-item-secondary {
+    background-color: #ff00c3; /* Magenta background for secondary tags */
+    color: #0f0c29; 
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    box-shadow: 0 0 10px rgba(255, 0, 195, 0.8); /* Stronger magenta glow */
+    transition: all 0.2s ease-in-out;
+    cursor: default;
+    text-transform: uppercase;
+}
+
 /* Custom styling for the JSON output box (must override Streamlit's style) */
 .stJson {
     border: 1px solid #00eaff;
@@ -235,6 +321,51 @@ header {visibility: hidden;}
 </style>
 """
 st.markdown(PAGE_CSS, unsafe_allow_html=True)
+
+# ------------------------------
+# HELPER FUNCTIONS
+# ------------------------------
+
+def _render_keywords_html(keywords, tag_class='tag-item'):
+    """Renders a list of keywords as HTML tags."""
+    if isinstance(keywords, str):
+        # Convert comma-separated string to a list
+        keywords = [k.strip() for k in keywords.split(',') if k.strip()]
+    elif not isinstance(keywords, list):
+        # Handle case where it's a single keyword string without commas
+        keywords = [keywords]
+
+    tags_html = "".join([f"<div class='{tag_class}'>{keyword.replace('-', ' ').title()}</div>" for keyword in keywords])
+    return f"<div class='tag-container'>{tags_html}</div>"
+
+
+def _render_file_tree_html(file_structure):
+    """
+    Renders the non-interactive file tree structure.
+    NOTE: The interactive part (collapsing) will be handled by st.expander outside this function.
+    """
+    
+    def _recursively_build_tree(structure):
+        html = '<ul class="file-tree-list">'
+        for name, content in structure.items():
+            is_folder = isinstance(content, dict)
+            
+            icon = '<span class="icon-folder">📁</span>' if is_folder else '<span class="icon-file">📄</span>'
+            color_class = 'folder-name' if is_folder else 'file-name'
+
+            html += f'<li class="tree-node">'
+            html += f'<span class="{color_class}">{icon} {name}</span>'
+            
+            if is_folder and content:
+                html += _recursively_build_tree(content)
+            
+            html += '</li>'
+            
+        html += '</ul>'
+        return html
+        
+    return _recursively_build_tree(file_structure)
+
 
 # ------------------------------
 # HERO SECTION
@@ -312,10 +443,9 @@ if start_analysis and repo_url.strip():
 
     for i, step in enumerate(steps):
         progress.progress((i + 1)/len(steps), text=f"✨ {step}")
-        time.sleep(2)
+        time.sleep(4)
 
     try:
-        # Call your backend
         final_result = run_assembly_line_analysis(repo_url)
 
         st.success("✅ Repo Analysis Complete! Data Synthesized.")
@@ -323,35 +453,55 @@ if start_analysis and repo_url.strip():
         st.write("---")
 
         # ------------------------------
-        # DISPLAY RESULTS (Using new card styling)
+        # DISPLAY RESULTS
         # ------------------------------
+        
+        # 1. Project Summary
         st.markdown("<div class='result-card-title'>📘 Project Summary</div>", unsafe_allow_html=True)
         st.markdown(f"<div class='result-card-content'>{final_result['project_summary']}</div>", unsafe_allow_html=True)
 
+        # 2. Missing Documentation / Improvements
         st.markdown("<div class='result-card-title'>📝 Missing Documentation / Improvements</div>", unsafe_allow_html=True)
         st.markdown(f"<div class='result-card-content'>{final_result['missing_documentation']}</div>", unsafe_allow_html=True)
 
-        st.markdown("<div class='result-card-title'>🏷️ Existing GitHub Keywords</div>", unsafe_allow_html=True)
-        st.markdown(f"<div class='result-card-content'>{final_result['github_keywords_extracted']}</div>", unsafe_allow_html=True)
+        # 3. Existing GitHub Topics/Keywords (Cyan Tags)
+        st.markdown("<div class='result-card-title'>🏷️ Existing GitHub Topics</div>", unsafe_allow_html=True)
+        existing_keywords_html = _render_keywords_html(final_result['github_keywords_extracted'], tag_class='tag-item')
+        st.markdown(f"<div class='result-card-content'>{existing_keywords_html}</div>", unsafe_allow_html=True)
 
+        # 4. Suggested Keywords for SEO 
         st.markdown("<div class='result-card-title'>🎯 Suggested Keywords for SEO</div>", unsafe_allow_html=True)
-        st.markdown(f"<div class='result-card-content'>{final_result['keywords']}</div>", unsafe_allow_html=True)
+        suggested_keywords_html = _render_keywords_html(final_result['keywords'], tag_class='tag-item-secondary')
+        st.markdown(f"<div class='result-card-content'>{suggested_keywords_html}</div>", unsafe_allow_html=True)
+
+        # 5. Related GitHub Topics
+        st.markdown("<div class='result-card-title'>🤝 Related GitHub Topics</div>", unsafe_allow_html=True)
+        related_topics_html = _render_keywords_html(final_result['github_topics'], tag_class='tag-item-related')
+        st.markdown(f"<div class='result-card-content'>{related_topics_html}</div>", unsafe_allow_html=True)
         
+        # 6. Suggested Title
         st.markdown("<div class='result-card-title'>🎯 Suggested Title</div>", unsafe_allow_html=True)
         st.markdown(f"<div class='result-card-content'><b>{final_result['suggested_title']}</b></div>", unsafe_allow_html=True)
 
+        # 7. Short Summary
         st.markdown("<div class='result-card-title'>📄 Short Summary (for Metadata)</div>", unsafe_allow_html=True)
         st.markdown(f"<div class='result-card-content'>{final_result['short_summary']}</div>", unsafe_allow_html=True)
 
+        # 8. Long Summary
         st.markdown("<div class='result-card-title'>📰 Long Summary (for README)</div>", unsafe_allow_html=True)
         st.markdown(f"<div class='result-card-content'>{final_result['long_summary']}</div>", unsafe_allow_html=True)
 
+        # 9. Expert Review Report
         st.markdown("<div class='result-card-title'>🧪 Expert Review Report</div>", unsafe_allow_html=True)
         st.markdown(f"<div class='result-card-content'>{final_result['review_report']}</div>", unsafe_allow_html=True)
 
+        # 10. Analyzed File Structure (Now Collapsible)
         st.markdown("<div class='result-card-title'>🏗️ Analyzed File Structure</div>", unsafe_allow_html=True)
-        # Custom display for the JSON to get the neon glow
-        st.markdown(f"<div class='stJson'>{json.dumps(final_result['file_structure'], indent=2)}</div>", unsafe_allow_html=True)
+        
+        # Use st.expander for the collapsible/coolapsible feature
+        with st.expander("📂 Click to view File Structure", expanded=True):
+            file_tree_html = _render_file_tree_html(final_result["file_structure"])
+            st.markdown(f"<div class='file-tree-container'>{file_tree_html}</div>", unsafe_allow_html=True)
 
     except Exception as e:
         st.error(f"An error occurred during analysis: {e}")

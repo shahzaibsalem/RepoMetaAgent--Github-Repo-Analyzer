@@ -10,7 +10,6 @@ def load_prompt_section(
     agent_key: str
 ) -> Dict[str, Any]:
     """
-    Universal loader for any prompt section in tags_generation.agents.
 
     Args:
         file_path: Path to YAML config
@@ -111,12 +110,14 @@ def make_reviewer_agent_node(groq_manager_instance: Any) -> Callable[[Dict[str, 
             output = response.choices[0].message.content
             print("\n--- Reviewer Output ---\n", output)
 
-            state["review_report"] = output
-            return state
+            return {
+                "review_report": output
+            }
 
         except Exception as e:
             print(f"!!! ERROR in ReviewerAgent: {e}")
-            state["review_report"] = {}
-            return state
+            return {
+                "review_report": {}
+            }
 
     return reviewer_node

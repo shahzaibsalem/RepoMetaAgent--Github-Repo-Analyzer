@@ -3,13 +3,14 @@ import re
 import json
 import requests
 from collections import Counter
-from typing import TypedDict, List, Dict, Union
+from typing import TypedDict, List, Dict, Union , Any
 
 from langgraph.graph import StateGraph, END
 
 class AnalysisState(TypedDict):
     repo_url: str
     files: List[Dict]
+    files_structure: Dict[str, Any]
     summaries: Dict[str, str]
     readme_md: str
     missing_docs: List[str]

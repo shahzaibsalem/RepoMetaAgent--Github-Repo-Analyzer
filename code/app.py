@@ -91,17 +91,16 @@ def run_assembly_line_analysis(repo_url: str) -> Dict[str, Any]:
     # Extract data from the final state produced by the entire graph run
     final_result = {
         "project_summary": final_state.get("readme_md", ""),
-        "file_summaries": final_state.get("summaries"),
         "missing_documentation": final_state.get("missing_docs"),
         "keywords": final_state.get("keywords", []),
-        "file_structure": final_state.get("files_structure", {}),
+        "github_keywords_extracted": final_state.get("github_keywords_extracted", []),
         "suggested_tags": final_state.get("keywords", [])[:5],
-        "short_summary": final_state.get("short_summary", ""),
-        "long_summary": final_state.get("long_summary", ""),
         "suggested_title": final_state.get("suggested_title", ""),
         "github_topics": final_state.get("github_topics", []),
+        "short_summary": final_state.get("short_summary", ""),
+        "long_summary": final_state.get("long_summary", ""),
         "review_report": final_state.get("review_report", ""),
-        "github_keywords_extracted": final_state.get("github_keywords_extracted", []),
+        "file_structure": final_state.get("files_structure", {}),
     }
     
     return final_result
