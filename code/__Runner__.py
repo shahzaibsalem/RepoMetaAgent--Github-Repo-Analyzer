@@ -338,6 +338,71 @@ def _render_keywords_html(keywords, tag_class='tag-item'):
     tags_html = "".join([f"<div class='{tag_class}'>{keyword.replace('-', ' ').title()}</div>" for keyword in keywords])
     return f"<div class='tag-container'>{tags_html}</div>"
 
+def render_suggested_title(title):
+    """Extract title whether it's plain string or dict."""
+    if not title:
+        return "<div class='result-card-content'><b>No title available</b></div>"
+
+    # If dict → extract first value
+    if isinstance(title, dict):
+        title = list(title.values())[0]
+
+    return f"<div class='result-card-content'><b>{title}</b></div>"
+
+
+def render_github_topics(topics):
+    """Render keyword list or JSON array into clean tag HTML."""
+    if not topics:
+        return "<div class='result-card-content'>No keywords found.</div>"
+
+    # If dict like { "github_topics": [...] }
+    if isinstance(topics, dict):
+        # Pick first key's value
+        topics = list(topics.values())[0]
+
+    # If JSON string → convert to list
+    if isinstance(topics, str):
+        try:
+            import json
+            data = json.loads(topics)
+            if isinstance(data, list):
+                topics = data
+        except:
+            topics = [topics]
+
+    # Final fallbacks
+    if not isinstance(topics, list):
+        topics = [topics]
+
+    tags_html = "".join([f"<div class='tag-item'>{k.replace('-', ' ').title()}</div>" for k in topics])
+    return f"<div class='tag-container'>{tags_html}</div>"
+
+
+
+def render_missing_docs(missing_docs):
+    """Render missing documentation list with red X icons instead of bullets."""
+    if not missing_docs:
+        return """
+        <div class='result-card-content' style='color: red; font-weight: 600;'>
+            ❌ No missing documentation found.
+        </div>
+        """
+
+    # If it's a list → show each item with a red X instead of a bullet
+    if isinstance(missing_docs, list):
+        items = "".join([
+            f"<div style='color: red; font-weight: 600; margin-bottom: 4px;'>❌ {doc}</div>"
+            for doc in missing_docs
+        ])
+        return f"<div class='result-card-content'>{items}</div>"
+
+    # If it's a single string
+    return f"""
+    <div class='result-card-content' style='color: red; font-weight: 600;'>
+        ❌ {missing_docs}
+    </div>
+    """
+
 
 def _render_file_tree_html(file_structure):
     """
@@ -462,12 +527,13 @@ if start_analysis and repo_url.strip():
 
         # 2. Missing Documentation / Improvements
         st.markdown("<div class='result-card-title'>📝 Missing Documentation / Improvements</div>", unsafe_allow_html=True)
-        st.markdown(f"<div class='result-card-content'>{final_result['missing_documentation']}</div>", unsafe_allow_html=True)
+        missing_docs = render_missing_docs(final_result['missing_documentation'])
+        st.markdown(f"{missing_docs}", unsafe_allow_html=True)
 
         # 3. Existing GitHub Topics/Keywords (Cyan Tags)
-        st.markdown("<div class='result-card-title'>🏷️ Existing GitHub Topics</div>", unsafe_allow_html=True)
-        existing_keywords_html = _render_keywords_html(final_result['github_keywords_extracted'], tag_class='tag-item')
-        st.markdown(f"<div class='result-card-content'>{existing_keywords_html}</div>", unsafe_allow_html=True)
+        st.markdown("<div class='result-card-title'>🏷️ Existing Keywords</div>", unsafe_allow_html=True)
+        Github_Topics = _render_keywords_html(final_result['github_keywords_extracted'], tag_class='tag-item')
+        st.markdown(f"<div class='result-card-content'>{Github_Topics}</div>", unsafe_allow_html=True)
 
         # 4. Suggested Keywords for SEO 
         st.markdown("<div class='result-card-title'>🎯 Suggested Keywords for SEO</div>", unsafe_allow_html=True)
@@ -476,12 +542,13 @@ if start_analysis and repo_url.strip():
 
         # 5. Related GitHub Topics
         st.markdown("<div class='result-card-title'>🤝 Related GitHub Topics</div>", unsafe_allow_html=True)
-        related_topics_html = _render_keywords_html(final_result['github_topics'], tag_class='tag-item-related')
+        related_topics_html = render_github_topics(final_result['github_topics'], tag_class='tag-item-related')
         st.markdown(f"<div class='result-card-content'>{related_topics_html}</div>", unsafe_allow_html=True)
         
         # 6. Suggested Title
         st.markdown("<div class='result-card-title'>🎯 Suggested Title</div>", unsafe_allow_html=True)
-        st.markdown(f"<div class='result-card-content'><b>{final_result['suggested_title']}</b></div>", unsafe_allow_html=True)
+        suggested_title_html = render_suggested_title(final_result['suggested_title'])
+        st.markdown(f"{suggested_title_html}", unsafe_allow_html=True)
 
         # 7. Short Summary
         st.markdown("<div class='result-card-title'>📄 Short Summary (for Metadata)</div>", unsafe_allow_html=True)
