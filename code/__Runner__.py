@@ -122,7 +122,10 @@ if start_analysis and repo_url.strip():
     st.markdown("## 📝 Missing Documentation")
     st.markdown(f"<div class='card'>{final_result['missing_documentation']}</div>", unsafe_allow_html=True)
 
-    st.markdown("## 🏷️ Keywords")
+    st.markdown("## 🏷️ Repo Keywords")
+    st.markdown(f"<div class='card'>{final_result['github_keywords_extracted']}</div>", unsafe_allow_html=True)
+
+    st.markdown("## 🏷️ Suggested Keywords")
     st.markdown(f"<div class='card'>{final_result['keywords']}</div>", unsafe_allow_html=True)
 
     st.markdown("## 🏗️ File Structure")
