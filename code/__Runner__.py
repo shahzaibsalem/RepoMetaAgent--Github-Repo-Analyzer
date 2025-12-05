@@ -495,7 +495,7 @@ if start_analysis and repo_url.strip():
         time.sleep(1)
 
     progress = st.progress(0, text="Loading...")
-
+    
     steps = [
         "Fetching Repository Data...",
         "Parsing File Contents...",
@@ -511,16 +511,17 @@ if start_analysis and repo_url.strip():
         time.sleep(4)
 
     try:
+        print("1")
         final_result = run_assembly_line_analysis(repo_url)
-
+        print("2")
         st.success("✅ Repo Analysis Complete! Data Synthesized.")
-
+        print("3")
         st.write("---")
 
         # ------------------------------
         # DISPLAY RESULTS
         # ------------------------------
-        
+        print("4")
         # 1. Project Summary
         st.markdown("<div class='result-card-title'>📘 Project Summary</div>", unsafe_allow_html=True)
         st.markdown(f"<div class='result-card-content'>{final_result['project_summary']}</div>", unsafe_allow_html=True)
@@ -536,9 +537,9 @@ if start_analysis and repo_url.strip():
         st.markdown(f"<div class='result-card-content'>{Github_Topics}</div>", unsafe_allow_html=True)
 
         # 4. Suggested Keywords for SEO 
-        st.markdown("<div class='result-card-title'>🎯 Suggested Keywords for SEO</div>", unsafe_allow_html=True)
-        suggested_keywords_html = _render_keywords_html(final_result['keywords'], tag_class='tag-item-secondary')
-        st.markdown(f"<div class='result-card-content'>{suggested_keywords_html}</div>", unsafe_allow_html=True)
+        # st.markdown("<div class='result-card-title'>🎯 Suggested Keywords for SEO</div>", unsafe_allow_html=True)
+        # suggested_keywords_html = _render_keywords_html(final_result['keywords'], tag_class='tag-item-secondary')
+        # st.markdown(f"<div class='result-card-content'>{suggested_keywords_html}</div>", unsafe_allow_html=True)
 
         # 5. Related GitHub Topics
         st.markdown("<div class='result-card-title'>🤝 Related GitHub Topics</div>", unsafe_allow_html=True)
@@ -546,9 +547,9 @@ if start_analysis and repo_url.strip():
         st.markdown(f"<div class='result-card-content'>{related_topics_html}</div>", unsafe_allow_html=True)
         
         # 6. Suggested Title
-        st.markdown("<div class='result-card-title'>🎯 Suggested Title</div>", unsafe_allow_html=True)
-        suggested_title_html = render_suggested_title(final_result['suggested_title'])
-        st.markdown(f"{suggested_title_html}", unsafe_allow_html=True)
+        # st.markdown("<div class='result-card-title'>🎯 Suggested Title</div>", unsafe_allow_html=True)
+        # suggested_title_html = render_suggested_title(final_result['suggested_title'])
+        # st.markdown(f"{suggested_title_html}", unsafe_allow_html=True)
 
         # 7. Short Summary
         st.markdown("<div class='result-card-title'>📄 Short Summary (for Metadata)</div>", unsafe_allow_html=True)

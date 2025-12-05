@@ -37,7 +37,7 @@ tags_generation:
           - Analytical and precise
           - Avoid extraction of implementation-specific components
           - Focus on general-purpose descriptions
-        goal: Extract a list of tags with their types and general-purpose descriptions.
+        goal: Extract a list of tags with their types and general-purpose descriptions. Strictly follow the output constraints and format.
 
     tag_type_assigner:
       llm: llama-3.3-70b-versatile
@@ -65,7 +65,7 @@ tags_generation:
                   type: Tag Type
               }
           ]
-        goal: Classify each tag into a predefined type to support structured tagging workflows.
+        goal: Classify each tag into a predefined type to support structured tagging workflows. Strictly follow the output constraints and format.
 
     tags_selector:
       llm: llama-3.3-70b-versatile
@@ -103,7 +103,7 @@ tags_generation:
                   type: Tag Type
               }
           ]
-        goal: Curate a concise, high-quality list of tags that best represent the input text.
+        goal: Curate a concise, high-quality list of tags that best represent the input text. Strictly follow the output constraints and format.
 
     short_summary_generator:
       llm: llama-3.3-70b-versatile
@@ -231,7 +231,7 @@ tags_generation:
             "seo_keywords": "<string>"
           }
         goal: |
-          Generate a clean, accurate, and highly discoverable set of GitHub topics and SEO metadata that enhances the project’s visibility, aligns with platform rules, and reflects the true nature of the repository.
+          Generate a clean, accurate, and highly discoverable set of GitHub topics and SEO metadata that enhances the project’s visibility, aligns with platform rules, and reflects the true nature of the repository. Strictly follow the output constraints and format.
 
     title_suggestion_generator:
       llm: llama-3.3-70b-versatile
@@ -266,21 +266,21 @@ tags_generation:
           }
 
         goal: |
-          Generate a clean, accurate, concise, and highly compelling project title that maximizes clarity, relevance, and discoverability while reflecting the true nature of the repository.
-    
+          Generate a clean, accurate, concise, and highly compelling project title that maximizes clarity, relevance, and discoverability while reflecting the true nature of the repository. Strictly follow the output constraints and format.
+
     review_report_generator:
       llm: llama-3.3-70b-versatile
       prompt_config:
         role: A senior documentation reviewer, technical auditor, and software quality critic.
-    
+
         instruction: |
           You are given the following variables:
           - **PROJECT_CONTEXT**: A detailed body of text containing README content, code snippets, architecture notes, feature descriptions, use-cases, developer instructions, comments, missing docs, and all available repository content.
           - **TARGET_AUDIENCE**: The primary consumers of the documentation (e.g., developers, contributors, maintainers, enterprise teams).
           - **REVIEW_STYLE**: Guidelines describing how the critique should be formed (e.g., “strict and technical,” “developer-friendly,” “high-level clarity review,” “quality-assurance-focused”).
-    
+
           Your task is to produce a **professional, structured, and highly detailed documentation review report**, formatted with **bold section titles** and well-written analytic paragraphs.
-    
+
           You must:
           1. Thoroughly analyze the PROJECT_CONTEXT to understand its purpose, structure, components, and documentation coverage.
           2. Identify **missing sections**, including documentation gaps, absent explanations, missing setup steps, or unclear architectural details.
@@ -294,19 +294,19 @@ tags_generation:
              - **Bold section headings**  
              - Clear paragraphs  
              - Optional bullet points where necessary  
-             - No unnecessary filler or conversational tone  
-    
+             - No unnecessary filler or conversational tone
+
         output_constraints: |
           - The output must include a single section:
             1. `review_report`: A rich-text, professional documentation-style critique.
           - The response MUST be properly formatted with **bold headers and paragraph-style writing**.
           - Do not add commentary, explanation, or self-referencing text outside the JSON.
           - The review must be strictly grounded in PROJECT_CONTEXT.
-    
+
         output_format: |
           {
             "review_report": ""
           }
-    
+
         goal: |
-          Produce a polished, structured, and professional documentation review report with bold headings, refined paragraphs, and actionable insights that highlight gaps, weaknesses, inconsistencies, and improvement areas strictly based on actual project content.
+          Produce a polished, structured, and professional documentation review report with bold headings, refined paragraphs, and actionable insights that highlight gaps, weaknesses, inconsistencies, and improvement areas strictly based on actual project content. Strictly follow the output constraints and format.

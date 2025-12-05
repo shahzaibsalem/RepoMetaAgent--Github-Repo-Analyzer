@@ -398,7 +398,12 @@ The maximum number of tags to return is {max_tags}.
                 ]
             )
 
+            print("--- LLM Selector Response Received ---")
+            print(f"--- Full LLM Selector Response: {response} ---")
+
             raw_content = response.choices[0].message.content.strip()
+
+            print(f"--- Raw LLM Selector Output:\n{raw_content}\n--- End of Output1 ---")
 
             # Remove ```json wrappers if present
             if raw_content.startswith("```"):
@@ -406,6 +411,8 @@ The maximum number of tags to return is {max_tags}.
 
             # Parse JSON safely
             data = json.loads(raw_content)
+
+            print(f"--- Parsed LLM Selector Data: {data} --- End of output2s ---")
 
             # Handle both dict and list outputs from LLM
             if isinstance(data, dict) and "tags" in data:
@@ -428,8 +435,8 @@ The maximum number of tags to return is {max_tags}.
 
         print(f"--- Selected {len(final_keywords)} final keywords ---")
         print("Selector Finished")
-        final_keywords_with_types = assign_tag_types(final_keywords)
-        return {"keywords": final_keywords_with_types}
+        # final_keywords_with_types = assign_tag_types(final_keywords)
+        return {"keywords": final_keywords}
 
     return selector_node
 
