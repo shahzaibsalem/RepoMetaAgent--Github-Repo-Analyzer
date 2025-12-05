@@ -55,7 +55,7 @@ def build_assembly_line_graph():
     workflow.add_node("meta_seo_node", meta_seo_app)
     workflow.add_node("reviewer_node", reviewer_app)
 
-    # 3b. Define the workflow flow
+    # 3b. Define the workflow
     
     workflow.set_entry_point("repo_analyzer_node")
 
