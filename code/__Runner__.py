@@ -339,18 +339,31 @@ def _render_keywords_html(keywords, tag_class='tag-item'):
     return f"<div class='tag-container'>{tags_html}</div>"
 
 
-def render_suggested_title(title):
-    """Extract title whether it's plain string or dict."""
-    if not title:
-        return "<div class='result-card-content'><b>No title available</b></div>"
+# def render_suggested_title(title):
+#     """Extract title whether it's plain string or dict."""
+#     if not title:
+#         return "<div class='result-card-content'><b>No title available</b></div>"
 
-    # If dict → extract first value
-    if isinstance(title, dict):
-        title = list(title.values())[0]
+#     # If dict → extract first value
+#     if isinstance(title, dict):
+#         title = list(title.values())[0]
+
+#     return f"<div class='result-card-content'><b>{title}</b></div>"
+
+
+def render_suggested_title(data):
+    """Render suggested title (from dict or string) in a clean title UI box."""
+
+    if not data:
+        return "<div class='title-box'>No title available</div>"
+
+    # Extract correct field if input is a dict
+    if isinstance(data, dict):
+        title = data.get("suggested_title") or list(data.values())[0]
+    else:
+        title = data
 
     return f"<div class='result-card-content'><b>{title}</b></div>"
-
-
 
 
 def render_github_topics(topics, tag_class='tag-item'):
@@ -396,56 +409,66 @@ def render_github_topics(topics, tag_class='tag-item'):
 
 
 
-def render_missing_docs(missing_docs):
-    """Render missing documentation list with red X icons instead of bullets."""
-    if not missing_docs:
-        return """
-        <div class='result-card-content' style='color: red; font-weight: 600;'>
-            ❌ No missing documentation found.
-        </div>
-        """
+# def render_missing_docs(missing_docs):
+#     """Render missing documentation list with red X icons instead of bullets."""
+#     if not missing_docs:
+#         return """
+#         <div class='result-card-content' style='color: red; font-weight: 600;'>
+#             ❌ No missing documentation found.
+#         </div>
+#         """
 
-    # If it's a list → show each item with a red X instead of a bullet
-    if isinstance(missing_docs, list):
-        items = "".join([
-            f"<div style='color: red; font-weight: 600; margin-bottom: 4px;'>❌ {doc}</div>"
-            for doc in missing_docs
-        ])
-        return f"<div class='result-card-content'>{items}</div>"
+#     # If it's a list → show each item with a red X instead of a bullet
+#     if isinstance(missing_docs, list):
+#         items = "".join([
+#             f"<div style='color: red; font-weight: 600; margin-bottom: 4px;'>❌ {doc}</div>"
+#             for doc in missing_docs
+#         ])
+#         return f"<div class='result-card-content'>{items}</div>"
 
-    # If it's a single string
-    return f"""
-    <div class='result-card-content' style='color: red; font-weight: 600;'>
-        ❌ {missing_docs}
-    </div>
-    """
+#     # If it's a single string
+#     return f"""
+#     <div class='result-card-content' style='color: red; font-weight: 600;'>
+#         ❌ {missing_docs}
+#     </div>
+#     """
 
 
 def _render_file_tree_html(file_structure):
-    """
-    Renders the non-interactive file tree structure.
-    NOTE: The interactive part (collapsing) will be handled by st.expander outside this function.
-    """
-    
+    """Renders a fully collapsible file tree while keeping the user's styling unchanged."""
+
     def _recursively_build_tree(structure):
         html = '<ul class="file-tree-list">'
         for name, content in structure.items():
             is_folder = isinstance(content, dict)
-            
+
             icon = '<span class="icon-folder">📁</span>' if is_folder else '<span class="icon-file">📄</span>'
             color_class = 'folder-name' if is_folder else 'file-name'
 
-            html += f'<li class="tree-node">'
-            html += f'<span class="{color_class}">{icon} {name}</span>'
-            
-            if is_folder and content:
+            html += "<li class='tree-node'>"
+
+            if is_folder:
+                # folder label (clickable)
+                html += f"""
+                <div class="folder-label" onclick="toggleFolder(this)">
+                    <span class="{color_class}">{icon} {name}</span>
+                </div>
+                """
+
+                # hidden content wrapper
+                html += "<div class='folder-content' style='display:none;'>"
                 html += _recursively_build_tree(content)
-            
-            html += '</li>'
-            
-        html += '</ul>'
+                html += "</div>"
+
+            else:
+                # file line
+                html += f"<span class='{color_class}'>{icon} {name}</span>"
+
+            html += "</li>"
+
+        html += "</ul>"
         return html
-        
+
     return _recursively_build_tree(file_structure)
 
 
@@ -578,7 +601,22 @@ if start_analysis and repo_url.strip():
 
         # 9. Expert Review Report
         st.markdown("<div class='result-card-title'>🧪 Expert Review Report</div>", unsafe_allow_html=True)
-        st.markdown(f"<div class='result-card-content'>{final_result['review_report']}</div>", unsafe_allow_html=True)
+        review_text = final_result["review_report"].get("review", "")
+        st.markdown(f"<div class='result-card-content'>{review_text}</div>", unsafe_allow_html=True)
+
+
+        st.markdown("""
+           <script>
+           function toggleFolder(el) {
+               const content = el.nextElementSibling;
+               if (content.style.display === "none") {
+                   content.style.display = "block";
+               } else {
+                   content.style.display = "none";
+               }
+           }
+           </script>
+        """, unsafe_allow_html=True)
 
         # 10. Analyzed File Structure (Now Collapsible)
         st.markdown("<div class='result-card-title'>🏗️ Analyzed File Structure</div>", unsafe_allow_html=True)
