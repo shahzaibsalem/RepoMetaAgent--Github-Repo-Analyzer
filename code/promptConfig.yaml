@@ -96,14 +96,17 @@ tags_generation:
           - Tags must be clearly supported by the original text.
           - Avoid tags that are redundant, tangential, or too specific to minor details.
           - Preserve original tag formatting (do not rename or retype tags).
+          - Return tag as a dictionary.
         output_format: |
           [
+            tags: [
               {
                   name: Tag,
                   type: Tag Type
               }
+            ]  
           ]
-        goal: Curate a concise, high-quality list of tags that best represent the input text. Strictly follow the output constraints and format.
+        goal: Curate a concise, high-quality list of tags that best represent the input text. Strictly follow the output constraints and output format.
 
     short_summary_generator:
       llm: llama-3.3-70b-versatile

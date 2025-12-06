@@ -416,6 +416,8 @@ The maximum number of tags to return is {max_tags}.
 
             # Handle both dict and list outputs from LLM
             if isinstance(data, dict) and "tags" in data:
+                print("--- LLM Selector returned a dictionary with 'tags' key ---")
+                # Extract tags from the dictionary
                 tag_items = data["tags"]
             elif isinstance(data, list):
                 tag_items = data
