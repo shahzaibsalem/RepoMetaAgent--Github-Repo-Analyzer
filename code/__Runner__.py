@@ -339,29 +339,34 @@ def _render_keywords_html(keywords, tag_class='tag-item'):
     return f"<div class='tag-container'>{tags_html}</div>"
 
 
-# def render_suggested_title(title):
-#     """Extract title whether it's plain string or dict."""
-#     if not title:
-#         return "<div class='result-card-content'><b>No title available</b></div>"
-
-#     # If dict → extract first value
-#     if isinstance(title, dict):
-#         title = list(title.values())[0]
-
-#     return f"<div class='result-card-content'><b>{title}</b></div>"
-
-
 def render_suggested_title(data):
-    """Render suggested title (from dict or string) in a clean title UI box."""
+    """Render suggested title (handles dict, list, JSON string, or plain text)."""
+    import json
 
     if not data:
         return "<div class='title-box'>No title available</div>"
 
-    # Extract correct field if input is a dict
+    # If JSON string → decode it
+    if isinstance(data, str):
+        try:
+            data = json.loads(data)
+        except:
+            # It's just a plain title string
+            return f"<div class='result-card-content'><b>{data}</b></div>"
+
+    # If list → take first element
+    if isinstance(data, list):
+        data = data[0] if data else None
+
+    # If dict → extract field
     if isinstance(data, dict):
         title = data.get("suggested_title") or list(data.values())[0]
     else:
         title = data
+
+    # If list of words → join
+    if isinstance(title, list):
+        title = ", ".join(title)
 
     return f"<div class='result-card-content'><b>{title}</b></div>"
 
@@ -408,69 +413,163 @@ def render_github_topics(topics, tag_class='tag-item'):
     return f"<div class='tag-container'>{tags_html}</div>"
 
 
+def render_seo_keywords(topics, tag_class='tag-item'):
+    """Render SEO keywords as tags."""
 
-# def render_missing_docs(missing_docs):
-#     """Render missing documentation list with red X icons instead of bullets."""
-#     if not missing_docs:
-#         return """
-#         <div class='result-card-content' style='color: red; font-weight: 600;'>
-#             ❌ No missing documentation found.
-#         </div>
-#         """
+    if not topics:
+        return "<div class='tag-container'>No SEO keywords found.</div>"
 
-#     # If it's a list → show each item with a red X instead of a bullet
-#     if isinstance(missing_docs, list):
-#         items = "".join([
-#             f"<div style='color: red; font-weight: 600; margin-bottom: 4px;'>❌ {doc}</div>"
-#             for doc in missing_docs
-#         ])
-#         return f"<div class='result-card-content'>{items}</div>"
+    # --- CRITICAL CLEANING STEP HERE (from previous turns) ---
+    if isinstance(topics, str):
+        topics = topics.replace('```json', '').replace('```JSON', '').strip().replace('```', '').strip()
+        try:
+            topics = json.loads(topics)
+        except json.JSONDecodeError:
+            pass # Keep topics as string if parsing fails
 
-#     # If it's a single string
-#     return f"""
-#     <div class='result-card-content' style='color: red; font-weight: 600;'>
-#         ❌ {missing_docs}
-#     </div>
-#     """
+    # --- DICTIONARY LOGIC ---
+    if isinstance(topics, dict):
+        # Extract the value (which is the comma-separated string)
+        topics = topics.get("SEO_KEYWORDS") or topics.get("seo_keywords")
 
+    # --- KEY FIX: CONVERT STRING TO LIST FOR TAGS ---
+    if isinstance(topics, str):
+        # Split the comma-separated string into a list of keywords
+        topics = [k.strip() for k in topics.split(',') if k.strip()]
+    elif not isinstance(topics, list):
+        topics = []
+        
+    # Rest of the function for rendering tags
+    tags_html = "".join(
+        f"<div class='{tag_class}'>{topic.replace('-', ' ').title()}</div>"
+        for topic in topics
+        if topic
+    )
+
+    return f"<div class='tag-container'>{tags_html}</div>"
+
+
+def render_seo_description(topics):
+    """Render SEO description as a single block of text."""
+
+    if not topics:
+        return "<div class='result-card-content'>No SEO description found.</div>"
+
+    # --- CRITICAL CLEANING STEP HERE (from previous turns) ---
+    if isinstance(topics, str):
+        topics = topics.replace('```json', '').replace('```JSON', '').strip().replace('```', '').strip()
+        try:
+            topics = json.loads(topics)
+        except json.JSONDecodeError:
+            pass # Keep topics as string if parsing fails
+
+    # --- DICTIONARY LOGIC ---
+    if isinstance(topics, dict):
+        # Extract the description text string
+        description_text = topics.get("SEO_DESCRIPTION") or topics.get("seo_description")
+    else:
+        # If input was the description string itself
+        description_text = str(topics)
+        
+    # Final check and rendering
+    if isinstance(description_text, str) and description_text.strip():
+        # Render as plain text inside a div, not as a list of tags
+        return f"<div class='result-card-content'><p>{description_text.strip()}</p></div>"
+    else:
+        return "<div class='result-card-content'>No SEO description found.</div>"
 
 def _render_file_tree_html(file_structure):
     """Renders a fully collapsible file tree while keeping the user's styling unchanged."""
 
-    def _recursively_build_tree(structure):
-        html = '<ul class="file-tree-list">'
-        for name, content in structure.items():
-            is_folder = isinstance(content, dict)
+    # This JavaScript function toggles the visibility of the folder-content div
+    # It must be injected into the Streamlit page.
+    js_toggle = """
+    <script>
+    function toggleFolder(element) {
+        // Find the next sibling element, which should be the folder-content div
+        var content = element.nextElementSibling;
+        
+        if (content && content.classList.contains('folder-content')) {
+            // Toggle the display property
+            if (content.style.display === "none") {
+                content.style.display = "block"; // Show the folder content
+            } else {
+                content.style.display = "none";  // Hide the folder content
+            }
+        }
+    }
+    </script>
+    """
+    
+    # Start the recursion at level 0 (top-level folders should be open)
+    return js_toggle + _recursively_build_tree(file_structure, level=0)
 
-            icon = '<span class="icon-folder">📁</span>' if is_folder else '<span class="icon-file">📄</span>'
-            color_class = 'folder-name' if is_folder else 'file-name'
+def _recursively_build_tree(structure, level=0):
+    """Recursive helper to build the file tree HTML."""
+    html = '<ul class="file-tree-list">'
+    
+    for name, content in structure.items():
+        # The content's type indicates if it's a folder (Dict[str, Any]) or a file (None)
+        is_folder = isinstance(content, dict)
 
-            html += "<li class='tree-node'>"
+        icon = '<span class="icon-folder">📁</span>' if is_folder else '<span class="icon-file">📄</span>'
+        color_class = 'folder-name' if is_folder else 'file-name'
 
-            if is_folder:
-                # folder label (clickable)
-                html += f"""
-                <div class="folder-label" onclick="toggleFolder(this)">
-                    <span class="{color_class}">{icon} {name}</span>
-                </div>
-                """
+        html += "<li class='tree-node'>"
 
-                # hidden content wrapper
-                html += "<div class='folder-content' style='display:none;'>"
-                html += _recursively_build_tree(content)
-                html += "</div>"
+        if is_folder:
+            # Folder label (clickable)
+            html += f"""
+            <div class="folder-label" onclick="toggleFolder(this)">
+                <span class="{color_class}">{icon} {name}</span>
+            </div>
+            """
+            
+            # If we are at level 0 (top level), the folder content is visible by default.
+            # If we are deeper (level > 0), the folder content is initially hidden.
+            initial_display = "display: none;" if level > 0 else "" 
+            
+            # Hidden content wrapper
+            html += f"<div class='folder-content' style='{initial_display}'>"
+            # Increment level for the recursive call
+            html += _recursively_build_tree(content, level=level + 1)
+            html += "</div>"
 
+        else:
+            # File line (content is None)
+            html += f"<span class='{color_class}'>{icon} {name}</span>"
+
+        html += "</li>"
+
+    html += "</ul>"
+    return html
+
+
+def render_review_report(review_report):
+    """Render expert review text safely from messy JSON, dict, or string."""
+
+    # 1. If it's a dict → extract "review"
+    if isinstance(review_report, dict):
+        review_report = review_report.get("review_report", "")
+
+    # 2. Try to parse JSON string
+    if isinstance(review_report, str):
+        try:
+            parsed = json.loads(review_report)
+            # if parsed is dict
+            if isinstance(parsed, dict):
+                review_report = parsed.get("review_report", parsed)
             else:
-                # file line
-                html += f"<span class='{color_class}'>{icon} {name}</span>"
+                review_report = parsed
+        except:
+            pass  # not JSON, just raw text
 
-            html += "</li>"
+    # 3. Clean the text
+    if isinstance(review_report, str):
+        review_report = review_report.strip().strip('"').replace('\n  ', '\n')
 
-        html += "</ul>"
-        return html
-
-    return _recursively_build_tree(file_structure)
-
+    # 4. Wrap in HTML
+    return f"<div class='result-card-content'>{review_report}</div>"
 
 # ------------------------------
 # HERO SECTION
@@ -563,8 +662,8 @@ if start_analysis and repo_url.strip():
         # ------------------------------
         print("4")
         # 1. Project Summary
-        st.markdown("<div class='result-card-title'>📘 Project Summary</div>", unsafe_allow_html=True)
-        st.markdown(f"<div class='result-card-content'>{final_result['project_summary']}</div>", unsafe_allow_html=True)
+        # st.markdown("<div class='result-card-title'>📘 Project Summary</div>", unsafe_allow_html=True)
+        # st.markdown(f"<div class='result-card-content'>{final_result['project_summary']}</div>", unsafe_allow_html=True)
 
         # 2. Missing Documentation / Improvements
         st.markdown("<div class='result-card-title'>📝 Missing Documentation / Improvements</div>", unsafe_allow_html=True)
@@ -576,7 +675,7 @@ if start_analysis and repo_url.strip():
         Github_Topics = _render_keywords_html(final_result['github_keywords_extracted'], tag_class='tag-item')
         st.markdown(f"{Github_Topics}", unsafe_allow_html=True)
 
-        # 4. Suggested Keywords for SEO 
+        # 4. Suggested Keywords for Repo 
         st.markdown("<div class='result-card-title'>🎯 Suggested Keywords for Repo</div>", unsafe_allow_html=True)
         suggested_keywords_html = _render_keywords_html(final_result['keywords'], tag_class='tag-item')
         st.markdown(f"{suggested_keywords_html}", unsafe_allow_html=True)
@@ -585,46 +684,43 @@ if start_analysis and repo_url.strip():
         st.markdown("<div class='result-card-title'>🤝 Related GitHub Topics</div>", unsafe_allow_html=True)
         related_topics_html = render_github_topics(final_result['github_topics'] , tag_class='tag-item')
         st.markdown(f"{related_topics_html}", unsafe_allow_html=True)
-        
-        # 6. Suggested Title
+
+        # 6. Suggested SEO Keywords
+        st.markdown("<div class='result-card-title'>🏷️ Suggested SEO Keywords</div>", unsafe_allow_html=True)
+        suggested_seo_keywords_html = render_seo_keywords(final_result['github_topics'], tag_class='tag-item')
+        st.markdown(f"<div class='result-card-content'>{suggested_seo_keywords_html}</div>", unsafe_allow_html=True)
+
+        # 7. Suggested Title
         st.markdown("<div class='result-card-title'>🎯 Suggested Title for Project</div>", unsafe_allow_html=True)
         suggested_title_html = render_suggested_title(final_result['suggested_title'])
         st.markdown(f"<div class='result-card-content'>{suggested_title_html}</div>", unsafe_allow_html=True)
 
-        # 7. Short Summary
+        # 8. Suggested SEO Description
+        st.markdown("<div class='result-card-title'>📝 Suggested SEO Description</div>", unsafe_allow_html=True)
+        suggested_seo_description_html = render_seo_description(final_result['github_topics'], tag_class='tag-item')
+        st.markdown(f"<div class='result-card-content'>{suggested_seo_description_html}</div>", unsafe_allow_html=True)
+       
+        # 9. Short Summary
         st.markdown("<div class='result-card-title'>📄 Short Summary (for Metadata)</div>", unsafe_allow_html=True)
         st.markdown(f"<div class='result-card-content'>{final_result['short_summary']}</div>", unsafe_allow_html=True)
 
-        # 8. Long Summary
+        # 10. Long Summary
         st.markdown("<div class='result-card-title'>📰 Long Summary (for README)</div>", unsafe_allow_html=True)
         st.markdown(f"<div class='result-card-content'>{final_result['long_summary']}</div>", unsafe_allow_html=True)
 
-        # 9. Expert Review Report
+        # 11. Expert Review Report
         st.markdown("<div class='result-card-title'>🧪 Expert Review Report</div>", unsafe_allow_html=True)
-        review_text = final_result["review_report"].get("review", "")
-        st.markdown(f"<div class='result-card-content'>{review_text}</div>", unsafe_allow_html=True)
+        review_report = render_review_report(final_result["review_report"])
 
+        st.markdown(review_report, unsafe_allow_html=True)
 
-        st.markdown("""
-           <script>
-           function toggleFolder(el) {
-               const content = el.nextElementSibling;
-               if (content.style.display === "none") {
-                   content.style.display = "block";
-               } else {
-                   content.style.display = "none";
-               }
-           }
-           </script>
-        """, unsafe_allow_html=True)
-
-        # 10. Analyzed File Structure (Now Collapsible)
+        # 12. Analyzed File Structure (Now Collapsible)
         st.markdown("<div class='result-card-title'>🏗️ Analyzed File Structure</div>", unsafe_allow_html=True)
         
         # Use st.expander for the collapsible/coolapsible feature
         with st.expander("📂 Click to view File Structure", expanded=True):
-            file_tree_html = _render_file_tree_html(final_result["file_structure"])
-            st.markdown(f"<div class='file-tree-container'>{file_tree_html}</div>", unsafe_allow_html=True)
+          file_tree_html = _render_file_tree_html(final_result["file_structure"])
+          st.markdown(f"<div class='file-tree-container'>{file_tree_html}</div>", unsafe_allow_html=True)
 
     except Exception as e:
         st.error(f"An error occurred during analysis: {e}")

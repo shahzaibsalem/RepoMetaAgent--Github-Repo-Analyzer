@@ -102,9 +102,7 @@ def run_assembly_line_analysis(repo_url: str) -> Dict[str, Any]:
         "review_report": final_state.get("review_report", ""),
         "file_structure": final_state.get("files_structure", {}),
     }
+    print("Tree structure")
 
-    # print("Missiing docs" + final_result["missing_documentation"])
-    # print("Keywords" + str(final_result["keywords"]))
-
-    
+    print(final_result["file_structure"])
     return final_result
