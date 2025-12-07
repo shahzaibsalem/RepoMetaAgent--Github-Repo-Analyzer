@@ -4,7 +4,7 @@ from typing import Any # Used for the make_llm_extractor_node type hint
 from dotenv import load_dotenv
 load_dotenv()
 # ----------------------
-# ⚡️ Groq Client Manager (Singleton Logic)
+# ⚡️ Groq Client Manager
 # ----------------------
 class GroqClientManager:
     """Manages the Groq client singleton and model configuration."""

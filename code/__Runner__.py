@@ -680,7 +680,7 @@ if start_analysis and repo_url.strip():
         review_report = render_review_report(final_result["review_report"])
         st.markdown(f"<div class='result-card-content'>{review_report}</div>", unsafe_allow_html=True)
 
-        # 12. Analyzed File Structure (Now Collapsible)
+        # 12. Analyzed File Structure
         st.markdown("<div class='result-card-title'>🏗️ Analyzed File Structure</div>", unsafe_allow_html=True)
         
         # Use st.expander for the collapsible/coolapsible feature
