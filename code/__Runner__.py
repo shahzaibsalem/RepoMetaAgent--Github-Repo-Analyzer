@@ -3,7 +3,7 @@ from PIL import Image
 import time
 import json 
 from app import run_assembly_line_analysis
-
+import streamlit.components.v1 as components
 
 
 # ------------------------------
@@ -326,6 +326,27 @@ st.markdown(PAGE_CSS, unsafe_allow_html=True)
 # HELPER FUNCTIONS
 # ------------------------------
 
+FILE_ICONS = {
+    ".py": "🐍",
+    ".md": "📄",
+    ".html": "🌐",
+    ".css": "🎨",
+    ".js": "📜",
+    ".png": "🖼️",
+    ".jpg": "🖼️",
+    ".jpeg": "🖼️",
+    ".gif": "🎞️",
+    ".pdf": "📕",
+}
+
+FOLDER_ICON = "📁"
+FILE_ICON_DEFAULT = "📄"
+
+
+if "is_analysis_running" not in st.session_state:
+    st.session_state.is_analysis_running = False
+    
+
 def _render_keywords_html(keywords, tag_class='tag-item'):
     """Renders a list of keywords as HTML tags."""
     if isinstance(keywords, str):
@@ -377,20 +398,14 @@ def render_github_topics(topics, tag_class='tag-item'):
     if not topics:
         return "<div class='tag-container'>No GitHub topics found.</div>"
 
-    # --- CRITICAL CLEANING STEP HERE ---
     if isinstance(topics, str):
-        # 1. Remove Streamlit/Markdown-specific quotes and language specifier ('```JSON')
         topics = topics.replace('```json', '').replace('```JSON', '').strip()
         topics = topics.replace('```', '').strip()
         
         try:
-            # 2. Attempt to parse the cleaned string as JSON
             topics = json.loads(topics)
         except json.JSONDecodeError as e:
-            # Add print/logging here to see the error and the problematic string
-            # print(f"JSON Decode Error: {e} with string: {topics[:100]}...")
-            
-            # If parsing fails, treat the original string as a single tag
+
             return f"<div class='tag-container'><div class='{tag_class}'>Parsing Error: {str(e)}</div></div>"
 
 
@@ -478,98 +493,55 @@ def render_seo_description(topics):
     else:
         return "<div class='result-card-content'>No SEO description found.</div>"
 
-def _render_file_tree_html(file_structure):
-    """Renders a fully collapsible file tree while keeping the user's styling unchanged."""
 
-    # This JavaScript function toggles the visibility of the folder-content div
-    # It must be injected into the Streamlit page.
-    js_toggle = """
-    <script>
-    function toggleFolder(element) {
-        // Find the next sibling element, which should be the folder-content div
-        var content = element.nextElementSibling;
-        
-        if (content && content.classList.contains('folder-content')) {
-            // Toggle the display property
-            if (content.style.display === "none") {
-                content.style.display = "block"; // Show the folder content
-            } else {
-                content.style.display = "none";  // Hide the folder content
-            }
-        }
-    }
-    </script>
+def render_file_tree(structure, level=0):
     """
-    
-    # Start the recursion at level 0 (top-level folders should be open)
-    return js_toggle + _recursively_build_tree(file_structure, level=0)
+    Recursively render a folder/file tree using Streamlit expanders.
+    Folders become expanders, files become markdown lines with indentation.
+    """
+    indent = "&nbsp;&nbsp;" * (level * 2)  # HTML spaces for indentation
 
-def _recursively_build_tree(structure, level=0):
-    """Recursive helper to build the file tree HTML."""
-    html = '<ul class="file-tree-list">'
-    
     for name, content in structure.items():
-        # The content's type indicates if it's a folder (Dict[str, Any]) or a file (None)
         is_folder = isinstance(content, dict)
 
-        icon = '<span class="icon-folder">📁</span>' if is_folder else '<span class="icon-file">📄</span>'
-        color_class = 'folder-name' if is_folder else 'file-name'
-
-        html += "<li class='tree-node'>"
-
         if is_folder:
-            # Folder label (clickable)
-            html += f"""
-            <div class="folder-label" onclick="toggleFolder(this)">
-                <span class="{color_class}">{icon} {name}</span>
-            </div>
-            """
-            
-            # If we are at level 0 (top level), the folder content is visible by default.
-            # If we are deeper (level > 0), the folder content is initially hidden.
-            initial_display = "display: none;" if level > 0 else "" 
-            
-            # Hidden content wrapper
-            html += f"<div class='folder-content' style='{initial_display}'>"
-            # Increment level for the recursive call
-            html += _recursively_build_tree(content, level=level + 1)
-            html += "</div>"
-
+            # Folder as an expander
+            with st.expander(f"{indent}{FOLDER_ICON} **{name}**", expanded=(level==0)):
+                render_file_tree(content, level=level+1)
         else:
-            # File line (content is None)
-            html += f"<span class='{color_class}'>{icon} {name}</span>"
-
-        html += "</li>"
-
-    html += "</ul>"
-    return html
+            # File: add icon based on extension
+            ext = "." + name.split(".")[-1] if "." in name else ""
+            icon = FILE_ICONS.get(ext, FILE_ICON_DEFAULT)
+            st.markdown(f"{indent}{icon} {name}", unsafe_allow_html=True)
 
 
-def render_review_report(review_report):
-    """Render expert review text safely from messy JSON, dict, or string."""
 
-    # 1. If it's a dict → extract "review"
-    if isinstance(review_report, dict):
-        review_report = review_report.get("review_report", "")
+def render_review_report(review_report_str):
 
-    # 2. Try to parse JSON string
-    if isinstance(review_report, str):
+    review_text = ""
+
+    if isinstance(review_report_str, dict):
+        review_text = review_report_str.get("review_report", "")
+
+    elif isinstance(review_report_str, str):
         try:
-            parsed = json.loads(review_report)
-            # if parsed is dict
-            if isinstance(parsed, dict):
-                review_report = parsed.get("review_report", parsed)
+            parsed = json.loads(review_report_str)
+            if isinstance(parsed, dict) and "review_report" in parsed:
+                review_text = parsed["review_report"]
             else:
-                review_report = parsed
+                review_text = review_report_str
         except:
-            pass  # not JSON, just raw text
+            # Not valid JSON → remove leading key manually
+            if '"review_report":' in review_report_str:
+                review_text = review_report_str.split('"review_report":', 1)[1]
+            else:
+                review_text = review_report_str
 
-    # 3. Clean the text
-    if isinstance(review_report, str):
-        review_report = review_report.strip().strip('"').replace('\n  ', '\n')
+    review_text = review_text.strip().lstrip('{"').rstrip('"}').strip()
 
-    # 4. Wrap in HTML
-    return f"<div class='result-card-content'>{review_report}</div>"
+    return review_text
+
+
 
 # ------------------------------
 # HERO SECTION
@@ -622,14 +594,13 @@ st.write("---")
 # INPUT SECTION
 # ------------------------------
 st.markdown("### 🔗 Enter GitHub Repository URL")
-
 repo_url = st.text_input("", placeholder="https://github.com/username/repo", key="repo_input")
-start_analysis = st.button("🔍 Analyze Repository")
-
+start_analysis = st.button("🔍 Analyze Repository" , disabled = st.session_state.is_analysis_running)
 # ------------------------------
 # EXECUTION & LOADING
 # ------------------------------
 if start_analysis and repo_url.strip():
+    st.session_state.is_analysis_running = True
     with st.spinner("⚡ Initializing AI ..."):
         time.sleep(1)
 
@@ -650,17 +621,13 @@ if start_analysis and repo_url.strip():
         time.sleep(4)
 
     try:
-        print("1")
         final_result = run_assembly_line_analysis(repo_url)
-        print("2")
         st.success("✅ Repo Analysis Complete! Data Synthesized.")
-        print("3")
-        st.write("---")
+
 
         # ------------------------------
         # DISPLAY RESULTS
         # ------------------------------
-        print("4")
         # 1. Project Summary
         # st.markdown("<div class='result-card-title'>📘 Project Summary</div>", unsafe_allow_html=True)
         # st.markdown(f"<div class='result-card-content'>{final_result['project_summary']}</div>", unsafe_allow_html=True)
@@ -697,7 +664,7 @@ if start_analysis and repo_url.strip():
 
         # 8. Suggested SEO Description
         st.markdown("<div class='result-card-title'>📝 Suggested SEO Description</div>", unsafe_allow_html=True)
-        suggested_seo_description_html = render_seo_description(final_result['github_topics'], tag_class='tag-item')
+        suggested_seo_description_html = render_seo_description(final_result['github_topics'])
         st.markdown(f"<div class='result-card-content'>{suggested_seo_description_html}</div>", unsafe_allow_html=True)
        
         # 9. Short Summary
@@ -711,19 +678,23 @@ if start_analysis and repo_url.strip():
         # 11. Expert Review Report
         st.markdown("<div class='result-card-title'>🧪 Expert Review Report</div>", unsafe_allow_html=True)
         review_report = render_review_report(final_result["review_report"])
-
-        st.markdown(review_report, unsafe_allow_html=True)
+        st.markdown(f"<div class='result-card-content'>{review_report}</div>", unsafe_allow_html=True)
 
         # 12. Analyzed File Structure (Now Collapsible)
         st.markdown("<div class='result-card-title'>🏗️ Analyzed File Structure</div>", unsafe_allow_html=True)
         
         # Use st.expander for the collapsible/coolapsible feature
-        with st.expander("📂 Click to view File Structure", expanded=True):
-          file_tree_html = _render_file_tree_html(final_result["file_structure"])
-          st.markdown(f"<div class='file-tree-container'>{file_tree_html}</div>", unsafe_allow_html=True)
+        with st.expander("📂 Project File Structure", expanded=True):
+         render_file_tree(final_result["file_structure"])
+
+        st.session_state.is_analysis_running = False
 
     except Exception as e:
         st.error(f"An error occurred during analysis: {e}")
+        st.session_state.is_analysis_running = False
+
+    finally:
+       st.session_state.is_analysis_running = False
 
 else:
     st.markdown("""

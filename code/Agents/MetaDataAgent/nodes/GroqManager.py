@@ -1,7 +1,8 @@
 import os
 from groq import Groq
 from typing import Any # Used for the make_llm_extractor_node type hint
-
+from dotenv import load_dotenv
+load_dotenv()
 # ----------------------
 # ⚡️ Groq Client Manager (Singleton Logic)
 # ----------------------

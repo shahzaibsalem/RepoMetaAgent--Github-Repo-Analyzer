@@ -4,9 +4,9 @@ import json
 import requests
 from collections import Counter
 from typing import TypedDict, List, Dict, Union , Any
-
+from dotenv import load_dotenv
 from langgraph.graph import StateGraph, END
-
+load_dotenv()
 class AnalysisState(TypedDict):
     repo_url: str
     files: List[Dict]
