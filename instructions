@@ -1,0 +1,29 @@
+#Create a virtual Envirmonment using the command below
+#python -m venv venv
+
+
+#Activate the virtual environment using the command below
+#For Windows
+#venv\Scripts\activate
+#For MacOS/Linux
+#source venv/bin/activate
+
+#To deactivate the virtual environment, use the command below
+#deactivate
+
+#Install the required packages using the command below
+#pip install -r requirements.txt
+
+
+#Add Groq api key to environment variables in your terminal using the command below
+#For Windows
+#$env:GROQ_API_KEY="your_api_key_here"
+
+
+#To freeze the installed packages into requirements.txt, use the command below
+#pip freeze > requirements.txt
+
+
+#To run the application, use the command below
+#python code/_Runner.py
+
