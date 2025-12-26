@@ -1,7 +1,7 @@
 import yaml
 import os
 from typing import Dict, Any, Callable, List
-from pathConfig import PROMPT_CONFIG_FILE
+from code.pathConfig import PROMPT_CONFIG_FILE
 
 
 

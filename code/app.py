@@ -1,8 +1,10 @@
 import streamlit as st
 from PIL import Image
 import time
-import json 
-from assembly_line import run_assembly_line_analysis
+import json
+import re 
+from code.assembly_line import run_assembly_line_analysis
+from code.utils import is_valid_github_repo
 import streamlit.components.v1 as components
 
 
@@ -590,6 +592,7 @@ st.markdown("""
 
 st.write("---")
 
+
 # ------------------------------
 # INPUT SECTION
 # ------------------------------
@@ -599,7 +602,7 @@ start_analysis = st.button("🔍 Analyze Repository" , disabled = st.session_sta
 # ------------------------------
 # EXECUTION & LOADING
 # ------------------------------
-if start_analysis and repo_url.strip():
+if is_valid_github_repo(repo_url) and start_analysis and repo_url.strip():
     st.session_state.is_analysis_running = True
     with st.spinner("⚡ Initializing AI ..."):
         time.sleep(1)

@@ -1,9 +1,9 @@
 from typing import List, Union , Dict, Any, Callable, TypedDict
 from langgraph.graph import StateGraph, END
 
-from Agents.Reviewer.__Review__ import make_reviewer_agent_node
-from Agents.MetaDataAgent.nodes.GroqManager import GroqClientManager
-from pathConfig import GROQ_MODEL
+from code.Agents.Reviewer.__Review__ import make_reviewer_agent_node
+from code.Agents.MetaDataAgent.nodes.GroqManager import GroqClientManager
+from code.pathConfig import GROQ_MODEL
 
 class ReviewerState(TypedDict):
     repo_url: str
