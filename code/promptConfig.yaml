@@ -135,7 +135,7 @@ tags_generation:
           - Output must be a single string containing only the final summary.
           - No headings, no labels, no bullet points, no meta-commentary.
           - The summary must align strictly with the tone, style, and audience requirements.
-          - No more than **MAX_SENTENCE_COUNT** sentences, even if very short.
+          - No more than 4 sentences, even if very short.
           - The output must be directly supported by PROJECT_CONTEXT details.
 
         output_format: |
@@ -174,6 +174,7 @@ tags_generation:
           - If SECTION_REQUIREMENTS are provided, follow them precisely.
           - The summary must reflect the tone, style, and audience settings with high fidelity.
           - The writing must feel purposeful, structured, and professionally crafted.
+          - No more than 6 sentences, even if very short.
 
         output_format: |
           A multi-paragraph or multi-section long-form summary, formatted according to the STYLE_GUIDE and SECTION_REQUIREMENTS.
