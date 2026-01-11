@@ -478,7 +478,7 @@ def render_seo_description(topics):
         try:
             topics = json.loads(topics)
         except json.JSONDecodeError:
-            pass # Keep topics as string if parsing fails
+            pass 
 
     # --- DICTIONARY LOGIC ---
     if isinstance(topics, dict):
