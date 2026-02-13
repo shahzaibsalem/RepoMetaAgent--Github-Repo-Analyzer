@@ -1,8 +1,9 @@
 from unittest.mock import patch
+import json
 import spacy
 import pytest
 from unittest.mock import MagicMock
-from code.Agents.MetaDataAgent.nodes.TagGenerator import make_llm_extractor_node
+from code.Agents.MetaDataAgent.nodes.TagGenerator import make_llm_extractor_node, make_selector_node
 from code.Agents.MetaDataAgent.nodes.TagGenerator import make_gazetteer_tag_generator_node
 from code.Agents.MetaDataAgent.nodes.TagGenerator import make_spacy_extractor_node
 from code.Agents.MetaDataAgent.nodes.TagGenerator import assign_tag_types
@@ -13,6 +14,12 @@ FAKE_GAZETTEER = {
     "Docker": "tool",
     "Flask": "framework",
 }
+
+
+
+# -------------------------------------------------
+# Tests for llm node
+# -------------------------------------------------
 
 
 def test_make_llm_extractor_node(mock_groq_manager):
@@ -51,8 +58,9 @@ def test_make_llm_extractor_node(mock_groq_manager):
 
 
 # -------------------------------------------------
-# 1. Basic extraction
+# Tests for gazetteer node
 # -------------------------------------------------
+
 @patch("code.Agents.MetaDataAgent.nodes.TagGenerator.load_gazetteer_data")
 def test_gazetteer_basic(mock_loader):
 
@@ -71,10 +79,6 @@ def test_gazetteer_basic(mock_loader):
         {"name": "docker", "type": "tool"},
     ]
 
-
-# -------------------------------------------------
-# 2. No match
-# -------------------------------------------------
 @patch("code.Agents.MetaDataAgent.nodes.TagGenerator.load_gazetteer_data")
 def test_gazetteer_no_match(mock_loader):
 
@@ -87,9 +91,6 @@ def test_gazetteer_no_match(mock_loader):
     assert result["gazetteer_keywords"] == []
 
 
-# -------------------------------------------------
-# 3. Empty text
-# -------------------------------------------------
 @patch("code.Agents.MetaDataAgent.nodes.TagGenerator.load_gazetteer_data")
 def test_gazetteer_empty_text(mock_loader):
 
@@ -102,9 +103,6 @@ def test_gazetteer_empty_text(mock_loader):
     assert result["gazetteer_keywords"] == []
 
 
-# -------------------------------------------------
-# 4. Deduplication
-# -------------------------------------------------
 @patch("code.Agents.MetaDataAgent.nodes.TagGenerator.load_gazetteer_data")
 def test_gazetteer_deduplicates(mock_loader):
 
@@ -118,10 +116,6 @@ def test_gazetteer_deduplicates(mock_loader):
         {"name": "python", "type": "language"}
     ]
 
-
-# -------------------------------------------------
-# 5. Case insensitive
-# -------------------------------------------------
 @patch("code.Agents.MetaDataAgent.nodes.TagGenerator.load_gazetteer_data")
 def test_gazetteer_case_insensitive(mock_loader):
 
@@ -136,9 +130,6 @@ def test_gazetteer_case_insensitive(mock_loader):
     ]
 
 
-# -------------------------------------------------
-# 6. Loader called once
-# -------------------------------------------------
 @patch("code.Agents.MetaDataAgent.nodes.TagGenerator.load_gazetteer_data")
 def test_loader_called_once(mock_loader):
 
@@ -152,7 +143,7 @@ def test_loader_called_once(mock_loader):
 
 
 # -------------------------------------------------
-# helper
+# Tests for spacy node
 # -------------------------------------------------
 
 def has_model():
@@ -165,10 +156,6 @@ def has_model():
 
 pytestmark = pytest.mark.skipif(not has_model(), reason="SpaCy model not installed")
 
-
-# -------------------------------------------------
-# 1. basic extraction
-# -------------------------------------------------
 
 def test_basic_keyword_extraction():
     node = make_spacy_extractor_node()
@@ -186,10 +173,6 @@ def test_basic_keyword_extraction():
     assert "server" in keywords
 
 
-# -------------------------------------------------
-# 2. empty input
-# -------------------------------------------------
-
 def test_empty_text_returns_empty():
     node = make_spacy_extractor_node()
 
@@ -197,10 +180,6 @@ def test_empty_text_returns_empty():
 
     assert result["spacy_keywords"] == []
 
-
-# -------------------------------------------------
-# 3. duplicates removed
-# -------------------------------------------------
 
 def test_duplicates_removed():
     node = make_spacy_extractor_node()
@@ -213,10 +192,6 @@ def test_duplicates_removed():
     assert len(keywords) == len(set(keywords))
 
 
-# -------------------------------------------------
-# 4. order sorted
-# -------------------------------------------------
-
 def test_keywords_are_sorted():
     node = make_spacy_extractor_node()
 
@@ -227,10 +202,6 @@ def test_keywords_are_sorted():
 
     assert keywords == sorted(keywords)
 
-
-# -------------------------------------------------
-# 5. real-world README paragraph
-# -------------------------------------------------
 
 def test_real_readme_paragraph():
     node = make_spacy_extractor_node()
@@ -249,10 +220,6 @@ def test_real_readme_paragraph():
         assert term in keywords
 
 
-# -------------------------------------------------
-# 6. very large text (stress test)
-# -------------------------------------------------
-
 def test_large_text_does_not_crash():
     node = make_spacy_extractor_node()
 
@@ -265,9 +232,8 @@ def test_large_text_does_not_crash():
 
 
 
-
 # -------------------------------------------------
-# 1. basic merge
+# Tests for union node
 # -------------------------------------------------
 
 def test_basic_union():
@@ -282,10 +248,6 @@ def test_basic_union():
     assert result["union_list"] == ["api", "backend", "docker", "python"]
 
 
-# -------------------------------------------------
-# 2. duplicates across sources removed
-# -------------------------------------------------
-
 def test_duplicates_removed():
     state = {
         "spacy_keywords": ["python", "docker"],
@@ -297,10 +259,6 @@ def test_duplicates_removed():
 
     assert result["union_list"] == ["docker", "python"]
 
-
-# -------------------------------------------------
-# 3. mixed types handled
-# -------------------------------------------------
 
 def test_mixed_types_and_invalid_items():
     state = {
@@ -316,19 +274,11 @@ def test_mixed_types_and_invalid_items():
     assert "api" in result["union_list"]
 
 
-# -------------------------------------------------
-# 5. empty input
-# -------------------------------------------------
-
 def test_empty_state():
     result = union_keywords_node({})
 
     assert result["union_list"] == []
 
-
-# -------------------------------------------------
-# 6. large stress input
-# -------------------------------------------------
 
 def test_large_scale():
     state = {
@@ -341,10 +291,6 @@ def test_large_scale():
 
     assert result["union_list"] == ["api", "docker", "python"]
 
-
-# -------------------------------------------------
-# 7. output contract
-# -------------------------------------------------
 
 def test_output_contract():
     state = {
@@ -363,38 +309,14 @@ def test_output_contract():
 
 
 
-import pytest
-from unittest.mock import MagicMock
-import json
+
+# -------------------------------------------------
+# Tests for tag type assignment node
+# -------------------------------------------------
 
 @pytest.fixture
-def mock_groq_client():
-    """Return a mock Groq client with default behavior."""
-    client = MagicMock()
-    response_mock = MagicMock()
-    response_mock.choices = [MagicMock()]
-    response_mock.choices[0].message = MagicMock()
-    response_mock.choices[0].message.content = json.dumps({
-        "tags": [
-            {"name": "python", "type": "language"},
-            {"name": "docker", "type": "container"}
-        ]
-    })
-    client.chat.completions.create = MagicMock(return_value=response_mock)
-    return client
-
-@pytest.fixture
-def mock_groq_manager(mock_groq_client):
-    """Return a mock GroqClientManager that returns the mock client."""
-    mgr = MagicMock()
-    mgr.get_client.return_value = mock_groq_client
-    mgr.get_model.return_value = "dummy-model"
-    return mgr
-
-@pytest.fixture
-def mock_config(monkeypatch):
-    """Patch load_tag_type_assigner_config to return dummy config."""
-    cfg = {
+def dummy_config():
+    return {
         "llm": "dummy-model",
         "role": "system-role",
         "instruction": "Assign types",
@@ -403,57 +325,290 @@ def mock_config(monkeypatch):
         "style_or_tone": "neutral",
         "goal": "test"
     }
+
+
+def make_client_with_response(content: str):
+    """
+    Returns a mock Groq client whose .create()
+    returns content exactly as provided.
+    """
+    client = MagicMock()
+
+    resp = MagicMock()
+    resp.choices = [MagicMock()]
+    resp.choices[0].message.content = content
+
+    client.chat.completions.create.return_value = resp
+    return client
+
+
+def test_assign_tag_types_normal(monkeypatch, dummy_config):
+    """Happy path → dict with 'tags'"""
+
+    # mock config loader
     monkeypatch.setattr(
         "code.Agents.MetaDataAgent.nodes.TagGenerator.load_tag_type_assigner_config",
-        lambda path: cfg
+        lambda _: dummy_config
     )
-    return cfg
 
-def test_assign_tag_types_normal(mock_groq_manager, mock_config):
-    keywords = ["python", "docker"]
-    result = assign_tag_types(keywords)
-    assert isinstance(result, list)
-    assert all("name" in t and "type" in t for t in result)
-    assert result[0]["name"] == "python"
+    # mock groq manager
+    manager = MagicMock()
+    manager.get_client.return_value = make_client_with_response(
+        json.dumps({
+            "tags": [
+                {"name": "python", "type": "language"},
+                {"name": "docker", "type": "tool"}
+            ]
+        })
+    )
 
-def test_assign_tag_types_malformed_json(mock_groq_manager, monkeypatch, mock_config):
-    # Make LLM return invalid JSON
-    def bad_json_client(path=None):
-        client = MagicMock()
-        response = MagicMock()
-        response.choices = [MagicMock()]
-        response.choices[0].message = MagicMock()
-        response.choices[0].message.content = "not json"
-        client.chat.completions.create = MagicMock(return_value=response)
-        return client
-    monkeypatch.setattr(mock_groq_manager, "get_client", lambda: bad_json_client())
+    monkeypatch.setattr(
+        "code.Agents.MetaDataAgent.nodes.TagGenerator.GroqClientManager",
+        lambda model=None: manager
+    )
 
-    result = assign_tag_types(["python"])
-    assert result == []
+    result = assign_tag_types(["python", "docker"])
 
-def test_assign_tag_types_empty_config(monkeypatch, mock_groq_manager):
-    # Patch config loader to return None
+    assert result == [
+        {"name": "python", "type": "language"},
+        {"name": "docker", "type": "tool"}
+    ]
+
+
+def test_assign_tag_types_llm_returns_list(monkeypatch, dummy_config):
+    """LLM returns list instead of dict → still valid"""
+
     monkeypatch.setattr(
         "code.Agents.MetaDataAgent.nodes.TagGenerator.load_tag_type_assigner_config",
-        lambda path: None
+        lambda _: dummy_config
     )
-    result = assign_tag_types(["python"])
-    assert result == []
 
-def test_assign_tag_types_llm_returns_list(mock_groq_manager, monkeypatch, mock_config):
-    # Make LLM return a list instead of dict
-    def list_client(path=None):
-        client = MagicMock()
-        response = MagicMock()
-        response.choices = [MagicMock()]
-        response.choices[0].message = MagicMock()
-        response.choices[0].message.content = json.dumps([
+    manager = MagicMock()
+    manager.get_client.return_value = make_client_with_response(
+        json.dumps([
             {"name": "python", "type": "language"}
         ])
-        client.chat.completions.create = MagicMock(return_value=response)
-        return client
-    monkeypatch.setattr(mock_groq_manager, "get_client", lambda: list_client())
+    )
+
+    monkeypatch.setattr(
+        "code.Agents.MetaDataAgent.nodes.TagGenerator.GroqClientManager",
+        lambda model=None: manager
+    )
 
     result = assign_tag_types(["python"])
-    assert isinstance(result, list)
-    assert result[0]["name"] == "python"
+
+    assert result == [{"name": "python", "type": "language"}]
+
+
+def test_assign_tag_types_malformed_json(monkeypatch, dummy_config):
+    """Broken JSON → should safely return []"""
+
+    monkeypatch.setattr(
+        "code.Agents.MetaDataAgent.nodes.TagGenerator.load_tag_type_assigner_config",
+        lambda _: dummy_config
+    )
+
+    manager = MagicMock()
+    manager.get_client.return_value = make_client_with_response("not json")
+
+    monkeypatch.setattr(
+        "code.Agents.MetaDataAgent.nodes.TagGenerator.GroqClientManager",
+        lambda model=None: manager
+    )
+
+    result = assign_tag_types(["python"])
+
+    assert result == []
+
+
+def test_assign_tag_types_empty_config(monkeypatch):
+    """No config → early return"""
+
+    monkeypatch.setattr(
+        "code.Agents.MetaDataAgent.nodes.TagGenerator.load_tag_type_assigner_config",
+        lambda _: None
+    )
+
+    result = assign_tag_types(["python"])
+
+    assert result == []
+
+
+
+
+
+# -------------------------------------------------
+# Tests for selector node
+# -------------------------------------------------
+
+def fake_manager(content: str):
+    """Creates manager whose LLM returns `content`"""
+    manager = MagicMock()
+
+    resp = MagicMock()
+    resp.choices = [MagicMock()]
+    resp.choices[0].message.content = content
+
+    client = MagicMock()
+    client.chat.completions.create.return_value = resp
+
+    manager.get_client.return_value = client
+    manager.get_model.return_value = "dummy-model"
+
+    return manager
+
+
+@pytest.fixture
+def selector_config(monkeypatch):
+    monkeypatch.setattr(
+        "code.Agents.MetaDataAgent.nodes.TagGenerator.load_tags_selector_config",
+        lambda _: {
+            "prompt_config": {
+                "role": "curator",
+                "instruction": "select best tags",
+                "output_format": '[{"name":"Tag","type":"Type"}]'
+            },
+            "max_tags": 5
+        }
+    )
+
+
+
+@pytest.mark.parametrize(
+    "llm_output, union_list, expected",
+    [
+        (
+            json.dumps([
+                {"name": "Python", "type": "language"},
+                {"name": "Docker", "type": "tool"}
+            ]),
+            ["python", "docker"],
+            ["python", "docker"],
+        ),
+
+        # dict with tags
+        (
+            json.dumps({"tags": [{"name": "FastAPI", "type": "framework"}]}),
+            ["fastapi"],
+            ["fastapi"],
+        ),
+
+        # wrapped code block
+        (
+            "```json\n[{\"name\":\"Redis\",\"type\":\"db\"}]\n```",
+            ["redis"],
+            ["redis"],
+        ),
+
+        # uppercase → lowercase
+        (
+            json.dumps([{"name": "PYTHON"}]),
+            ["python"],
+            ["python"],
+        ),
+
+        # whitespace trimmed
+        (
+            json.dumps([{"name": "  docker  "}]),
+            ["docker"],
+            ["docker"],
+        ),
+
+        # duplicates preserved (node does not dedupe)
+        (
+            json.dumps([{"name": "python"}, {"name": "python"}]),
+            ["python"],
+            ["python", "python"],
+        ),
+
+        # short names removed
+        (
+            json.dumps([{"name": "ai"}, {"name": "docker"}]),
+            ["ai", "docker"],
+            ["docker"],
+        ),
+
+        # missing name
+        (
+            json.dumps([{"type": "tool"}]),
+            ["docker"],
+            [],
+        ),
+
+        # empty name
+        (
+            json.dumps([{"name": ""}]),
+            [""],
+            [],
+        ),
+
+        # non-dict items
+        (
+            json.dumps(["python", 123, None]),
+            ["python"],
+            [],
+        ),
+
+
+        # malformed JSON
+        (
+            "not json",
+            ["python"],
+            [],
+        ),
+
+        # empty string
+        (
+            "",
+            ["python"],
+            [],
+        ),
+
+        # wrong JSON shape
+        (
+            json.dumps({"unexpected": "format"}),
+            ["python"],
+            [],
+        ),
+
+        # empty list from LLM
+        (
+            json.dumps([]),
+            ["python"],
+            [],
+        ),
+
+        # dict with empty tags
+        (
+            json.dumps({"tags": []}),
+            ["python"],
+            [],
+        ),
+
+        # empty union → early exit
+        (
+            json.dumps([{"name": "python"}]),
+            [],
+            [],
+        ),
+
+        # many candidates
+        (
+            json.dumps([{"name": f"tag{i}"} for i in range(10)]),
+            [f"tag{i}" for i in range(10)],
+            [f"tag{i}" for i in range(10)],
+        ),
+    ],
+)
+def test_selector_node_param(selector_config, llm_output, union_list, expected):
+    manager = fake_manager(llm_output)
+    node = make_selector_node(manager)
+
+    state = {
+        "union_list": union_list,
+        "summaries": {"readme.md": "dummy text"},
+    }
+
+    result = node(state)
+
+    assert result["keywords"] == expected
