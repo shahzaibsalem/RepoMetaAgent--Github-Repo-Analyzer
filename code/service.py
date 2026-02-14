@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, HttpUrl
 from typing import Dict, Any
 import traceback
@@ -12,41 +13,22 @@ app = FastAPI(
 )
 
 
-# -------- Request Schema --------
-
 class RepoRequest(BaseModel):
     repo_url: HttpUrl
 
-
-# -------- Response Schema (Optional but Recommended) --------
-
-class RepoResponse(BaseModel):
-    project_summary: str
-    missing_documentation: list
-    keywords: list
-    github_keywords_extracted: list
-    suggested_tags: list
-    suggested_title: str
-    github_topics: list
-    short_summary: str
-    long_summary: str
-    review_report: str
-    file_structure: Dict[str, Any]
-
-
-# -------- Health Check --------
 
 @app.get("/")
 def health():
     return {"status": "RepoMetaAgent API running"}
 
 
-# -------- Main Endpoint --------
-
-@app.post("/analyze", response_model=RepoResponse)
-def analyze_repo(payload: RepoRequest):
+@app.post("/analyze")
+async def analyze_repo(payload: RepoRequest):
     try:
-        result = run_assembly_line_analysis(payload.repo_url)
+        result = await run_in_threadpool(
+            run_assembly_line_analysis,
+            str(payload.repo_url)   # 🔥 THIS IS THE FIX
+        )
         return result
 
     except Exception as e:

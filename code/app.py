@@ -3,8 +3,8 @@ from PIL import Image
 import time
 import json
 import re 
-from code.assembly_line import run_assembly_line_analysis
-from code.utils import is_valid_github_repo
+from assembly_line import run_assembly_line_analysis
+from utils import is_valid_github_repo
 import streamlit.components.v1 as components
 
 
