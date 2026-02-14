@@ -1,15 +1,15 @@
 from typing import Any, Dict, List, TypedDict, Union
 from langgraph.graph import StateGraph, END
 
-from code.Agents.MetaDataAgent.nodes.TagGenerator import (
+from Agents.MetaDataAgent.nodes.TagGenerator import (
     union_keywords_node,
     make_selector_node,
     make_llm_extractor_node,
     make_gazetteer_tag_generator_node,
     make_spacy_extractor_node,
 )
-from code.Agents.MetaDataAgent.nodes.GroqManager import GroqClientManager
-from code.pathConfig import GROQ_MODEL
+from Agents.MetaDataAgent.nodes.GroqManager import GroqClientManager
+from pathConfig import GROQ_MODEL
 
 
 # -----------------------------

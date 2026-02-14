@@ -1,7 +1,7 @@
 import yaml
 import os
 from typing import Dict, Any, Callable, List
-from code.pathConfig import PROMPT_CONFIG_FILE
+from pathConfig import PROMPT_CONFIG_FILE
 
 def load_prompt_section(
     file_path: str,

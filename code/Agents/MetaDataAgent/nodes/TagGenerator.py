@@ -5,12 +5,11 @@ import re
 import spacy
 import json
 
-from code.pathConfig import GAZETTEER_FILE , SPACY_MODEL_NAME, EXCLUDED_SPACY_ENTITY_TYPES
+from pathConfig import GAZETTEER_FILE , SPACY_MODEL_NAME, EXCLUDED_SPACY_ENTITY_TYPES
 from groq import Groq
-from code.pathConfig import PROMPT_CONFIG_FILE
-
-from code.Agents.MetaDataAgent.nodes.GroqManager import GroqClientManager
-from code.pathConfig import GROQ_MODEL
+from pathConfig import PROMPT_CONFIG_FILE
+from Agents.MetaDataAgent.nodes.GroqManager import GroqClientManager
+from pathConfig import GROQ_MODEL
 
 # -----------------------------
 # Load YAML Prompt Config

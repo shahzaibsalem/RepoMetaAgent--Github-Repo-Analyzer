@@ -2,10 +2,10 @@ import os
 import json
 from typing import Dict, Any, List, TypedDict, Union
 from langgraph.graph import StateGraph, END
-from code.Agents.RepoAnalyzerAgent.RepoAnalyzer import build_analyzer_graph
-from code.Agents.MetaDataAgent.Graph._Tagsgraph import build_tag_generation_graph
-from code.Agents.MetaDataAgent.Graph._MetaSEOGraph import build_meta_seo_graph
-from code.Agents.Reviewer.__graph__ import build_reviewer_graph
+from Agents.RepoAnalyzerAgent.RepoAnalyzer import build_analyzer_graph
+from Agents.MetaDataAgent.Graph._Tagsgraph import build_tag_generation_graph
+from Agents.MetaDataAgent.Graph._MetaSEOGraph import build_meta_seo_graph
+from Agents.Reviewer.__graph__ import build_reviewer_graph
 
 class UnifiedAnalysisState(TypedDict):
     #Fields for Entire Assembly Line
