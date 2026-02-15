@@ -3,7 +3,7 @@ from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, HttpUrl
 from typing import Dict, Any
 import traceback
-from assembly_line import run_assembly_line_analysis
+from code.assembly_line import run_assembly_line_analysis
 
 
 app = FastAPI(
