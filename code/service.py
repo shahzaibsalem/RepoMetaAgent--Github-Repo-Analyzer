@@ -27,7 +27,7 @@ async def analyze_repo(payload: RepoRequest):
     try:
         result = await run_in_threadpool(
             run_assembly_line_analysis,
-            str(payload.repo_url)   # 🔥 THIS IS THE FIX
+            str(payload.repo_url)
         )
         return result
 
