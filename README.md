@@ -1,18 +1,19 @@
-# RepoMetaAgent  
+# RepoMetaAgent
+
 ### Multi-Agent GitHub Repository Intelligence System
 
 RepoMetaAgent is a deterministic multi-agent system that analyzes any public GitHub repository and converts it into structured, machine-readable intelligence.
 
 Given a repository URL, the system automatically generates:
 
-- Repository title  
-- Short and long summaries  
-- Keywords and tags  
-- Metadata and classification  
-- Code review insights  
-- Improvement recommendations  
-- Documentation gap analysis  
-- Unified JSON output  
+- Repository title
+- Short and long summaries
+- Keywords and tags
+- Metadata and classification
+- Code review insights
+- Improvement recommendations
+- Documentation gap analysis
+- Unified JSON output
 
 ---
 
@@ -21,20 +22,21 @@ Given a repository URL, the system automatically generates:
 Understanding a repository manually is slow and inconsistent.
 
 Most tools:
-- Rely only on README files  
-- Miss structural insights  
-- Produce shallow summaries  
-- Lack standard output formats  
+
+- Rely only on README files
+- Miss structural insights
+- Produce shallow summaries
+- Lack standard output formats
 
 RepoMetaAgent solves this by using a multi-agent pipeline that performs deep, structured analysis across the entire repository.
 
 This makes it useful for:
 
-- Developer tools  
-- AI agents needing repo context  
-- Search and indexing systems  
-- Documentation automation  
-- Repository quality evaluation  
+- Developer tools
+- AI agents needing repo context
+- Search and indexing systems
+- Documentation automation
+- Repository quality evaluation
 
 ---
 
@@ -57,15 +59,15 @@ The system is built using LangGraph for orchestration and Groq for fast LLM infe
 ### Pipeline Flow:
 
 Repository URL
-      ->
+->
 Repo Analyzer Agent
-      ->
+->
 Metadata Agent
-      ->
+->
 Tag Generator Agent
-      ->
+->
 Review & Improvement Agent
-      ->
+->
 Final JSON Output
 
 Each agent operates on a shared structured state, ensuring consistency and reproducibility.
@@ -78,9 +80,7 @@ Each agent operates on a shared structured state, ensuring consistency and repro
 
 git clone https://github.com/shahzaibsalem/RepoMetaAgent--Github-Repo-Analyzer
 
-
 ### Run the following command in terminal:
-
 
 cd code
 
@@ -116,7 +116,15 @@ export GROQ_API_KEY="your_api_key_here"
 
 Run the full pipeline:
 
-python code/app.py 
+python code/app.py
+
+---
+
+## 🎥 Live Demo
+
+Click below to watch RepoMetaAgent in action:
+
+[![RepoMetaAgent Demo](https://img.youtube.com/vi/cYkiVOm7qkQ/0.jpg)](https://www.youtube.com/watch?v=cYkiVOm7qkQ)
 
 ---
 
@@ -124,20 +132,20 @@ python code/app.py
 
 The system generates a structured JSON intelligence bundle containing:
 
-- Repository title and summaries  
-- Extracted keywords and tags  
-- Structured metadata and classification  
-- Code review insights  
-- Improvement recommendations  
-- Missing documentation analysis  
-- Repository structure details  
+- Repository title and summaries
+- Extracted keywords and tags
+- Structured metadata and classification
+- Code review insights
+- Improvement recommendations
+- Missing documentation analysis
+- Repository structure details
 
 This output is designed for:
 
-- AI agent consumption  
-- Dashboard visualization  
-- Search indexing  
-- Documentation generation systems  
+- AI agent consumption
+- Dashboard visualization
+- Search indexing
+- Documentation generation systems
 
 ---
 
@@ -145,11 +153,11 @@ This output is designed for:
 
 The system is validated through:
 
-- Unit testing for each agent  
-- Integration testing for state transitions  
-- End-to-end pipeline testing  
-- Schema validation (strict JSON outputs)  
-- Failure testing (invalid repos, missing files)  
+- Unit testing for each agent
+- Integration testing for state transitions
+- End-to-end pipeline testing
+- Schema validation (strict JSON outputs)
+- Failure testing (invalid repos, missing files)
 
 This ensures consistent, production-ready results.
 
@@ -167,26 +175,24 @@ This ensures consistent, production-ready results.
 
 # 🎥 Live Demo
 
-(Add your embedded video or link here)
-
 ---
 
 # ⚠️ Limitations
 
-- Large repositories increase processing time  
-- Binary files are ignored  
-- Requires Groq API access  
-- No dynamic code execution (static only)  
+- Large repositories increase processing time
+- Binary files are ignored
+- Requires Groq API access
+- No dynamic code execution (static only)
 
 ---
 
 # 🛣 Roadmap
 
-- Static code analysis integration  
-- UML diagram generation  
-- Repository similarity search  
-- Security vulnerability scanning  
-- Advanced scoring metrics  
+- Static code analysis integration
+- UML diagram generation
+- Repository similarity search
+- Security vulnerability scanning
+- Advanced scoring metrics
 
 ---
 
