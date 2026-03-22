@@ -1,0 +1,22 @@
+# Environment variables
+.env
+
+# Python
+__pycache__/
+*.pyc
+
+# Virtual environment
+venv/
+
+# Logs
+*.log
+
+# Output files
+outputs/
+
+# OS files
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
