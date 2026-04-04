@@ -39,7 +39,6 @@ def build_assembly_line_graph():
     """
     print("--- 🏭 Building Master Assembly Line Graph ---")
 
-    # Initialize the master StateGraph with the unified state
     workflow = StateGraph(UnifiedAnalysisState)
     
     repo_analyzer_app = build_analyzer_graph()
