@@ -15,7 +15,6 @@ Given a repository URL, the system generates:
 - Documentation gap analysis  
 - Unified JSON output  
 
----
 
 ## 🚀 Why This Project Matters
 
@@ -36,7 +35,6 @@ This makes it useful for:
 - Documentation automation  
 - Repository quality evaluation  
 
----
 
 ## 🧠 Key Features
 
@@ -48,7 +46,6 @@ This makes it useful for:
 - Missing documentation detection  
 - Scalable and modular design  
 
----
 
 ## 🏗 Architecture Overview
 
@@ -70,7 +67,6 @@ The system is built using LangGraph for orchestration and Groq for fast LLM infe
 
 Each agent operates on a shared structured state, ensuring consistency and reproducibility.
 
----
 
 ## ⚙️ Installation
 
@@ -78,9 +74,10 @@ Each agent operates on a shared structured state, ensuring consistency and repro
 
 ```bash
 git clone https://github.com/shahzaibsalem/RepoMetaAgent--Github-Repo-Analyzer
+```
+```bash
 cd RepoMetaAgent--Github-Repo-Analyzer
 ```
-
 ---
 
 ### 2. Create Virtual Environment
@@ -101,7 +98,6 @@ venv\Scripts\activate
 source venv/bin/activate
 ```
 
----
 
 ### 3. Install Dependencies
 
@@ -117,7 +113,6 @@ pip install -r requirements.txt
 export GROQ_API_KEY="your_api_key_here"
 ```
 
----
 
 ## ▶️ Usage
 
@@ -127,7 +122,6 @@ Run the full pipeline:
 python code/app.py
 ```
 
----
 
 ## 🎥 Live Demo
 
@@ -135,7 +129,6 @@ Click below to watch RepoMetaAgent in action:
 
 [![RepoMetaAgent Demo](https://img.youtube.com/vi/cYkiVOm7qkQ/0.jpg)](https://www.youtube.com/watch?v=cYkiVOm7qkQ)
 
----
 
 ## 📤 What the Output Will Be
 
@@ -155,7 +148,6 @@ This output is designed for:
 - Search indexing  
 - Documentation generation systems  
 
----
 
 ## 🧪 Testing & Reliability
 
@@ -169,7 +161,6 @@ The system is validated through:
 
 This ensures consistent, production-ready results.
 
----
 
 ## 🔐 Security Considerations
 
@@ -179,7 +170,6 @@ This ensures consistent, production-ready results.
 - Prompt injection mitigation  
 - Structured JSON output enforcement  
 
----
 
 ## ⚠️ Limitations
 
@@ -188,7 +178,6 @@ This ensures consistent, production-ready results.
 - Requires Groq API access  
 - No dynamic code execution  
 
----
 
 ## 🛣 Roadmap
 
@@ -198,13 +187,11 @@ This ensures consistent, production-ready results.
 - Security vulnerability scanning  
 - Advanced scoring metrics  
 
----
 
 ## 📜 License
 
 This project is licensed under the MIT License. See the LICENSE file for details.
 
----
 
 ## 🎯 Conclusion
 
